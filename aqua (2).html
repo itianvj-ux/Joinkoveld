@@ -1,0 +1,1748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aqua — Koveld</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#132321;
+    --ink-soft:#3f5450;
+    --bg:#eef2ee;
+    --panel:#ffffff;
+    --line:#d6e0d9;
+    --teal:#0b3d3b;
+    --teal-deep:#082826;
+    --grass:#4c8c4a;
+    --grass-soft:#e4f0e2;
+    --sun:#e8b73e;
+    --sun-soft:#fbf1d9;
+    --danger:#b8503f;
+    --danger-soft:#fbe8e4;
+    --radius:14px;
+    --shadow: 0 1px 2px rgba(19,35,33,.06), 0 8px 24px -12px rgba(19,35,33,.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Inter',sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.display{
+    font-family:'Space Grotesk',sans-serif;
+    letter-spacing:-0.01em;
+  }
+  .mono{ font-family:'Space Mono', monospace; }
+  a{color:inherit;}
+  button{font-family:inherit;}
+
+  /* ---------- layout shell ---------- */
+  #app{ display:flex; min-height:100vh; }
+
+  .sidebar{
+    width:224px;
+    flex-shrink:0;
+    background:var(--teal);
+    color:#eaf3f1;
+    display:flex;
+    flex-direction:column;
+    position:fixed;
+    top:0; bottom:0; left:0;
+    z-index:40;
+    transition:transform .25s ease;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:22px 20px 18px;
+    border-bottom:1px solid rgba(234,243,241,.12);
+  }
+  .brand-mark{
+    width:34px;height:34px;flex-shrink:0;
+  }
+  .brand-text .name{ font-family:'Space Grotesk'; font-size:19px; font-weight:700; line-height:1; color:#fff; }
+  .brand-text .sub{ font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:#8fb8b3; margin-top:4px; }
+
+  nav.nav{ padding:14px 12px; display:flex; flex-direction:column; gap:2px; flex:1; }
+  .nav-item{
+    display:flex; align-items:center; gap:11px;
+    padding:10px 12px; border-radius:10px;
+    color:#c8dfdb; text-decoration:none; cursor:pointer;
+    font-size:14.5px; font-weight:500;
+    border:none; background:none; width:100%; text-align:left;
+  }
+  .nav-item svg{ width:18px; height:18px; flex-shrink:0; opacity:.85; }
+  .nav-item:hover{ background:rgba(234,243,241,.08); color:#fff; }
+  .nav-item.active{ background:#0f4d4a; color:#fff; }
+  .nav-item.active svg{ opacity:1; }
+
+  .sidebar-foot{
+    padding:16px 20px 20px;
+    font-size:11.5px;
+    color:#6f9a94;
+    border-top:1px solid rgba(234,243,241,.1);
+  }
+
+  .topbar{
+    display:none;
+    align-items:center;
+    justify-content:space-between;
+    padding:14px 16px;
+    background:var(--teal);
+    color:#fff;
+    position:sticky; top:0; z-index:30;
+  }
+  #menuBtn{ background:none; border:none; color:#fff; padding:6px; cursor:pointer; }
+
+  main{
+    margin-left:224px;
+    flex:1;
+    min-width:0;
+    padding:28px 34px 60px;
+  }
+  .view{ display:none; animation:fade .25s ease; }
+  .view.active{ display:block; }
+  @keyframes fade{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);} }
+
+  .view-head{ display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:22px; flex-wrap:wrap; }
+  .view-head h1{ font-size:26px; margin:0 0 4px; color:var(--teal-deep); }
+  .view-head p{ margin:0; color:var(--ink-soft); font-size:14px; }
+
+  .btn{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:10px 16px; border-radius:10px; border:none;
+    font-size:14px; font-weight:600; cursor:pointer;
+    background:var(--teal); color:#fff;
+    transition:background .15s ease, transform .1s ease;
+  }
+  .btn:hover{ background:var(--teal-deep); }
+  .btn:active{ transform:scale(.97); }
+  .btn svg{ width:15px; height:15px; }
+  .btn.secondary{ background:var(--panel); color:var(--teal); border:1px solid var(--line); }
+  .btn.secondary:hover{ background:var(--grass-soft); }
+  .btn.danger{ background:var(--danger); }
+  .btn.danger:hover{ background:#96402f; }
+  .btn.grass{ background:var(--grass); }
+  .btn.grass:hover{ background:#3d7a3c; }
+  .btn.sm{ padding:7px 11px; font-size:12.5px; }
+  .btn:disabled{ opacity:.5; cursor:not-allowed; }
+
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+  }
+  .card-pad{ padding:20px 22px; }
+
+  /* stat cards */
+  .stats-row{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:24px; }
+  .stat{ padding:18px 20px; }
+  .stat .label{ font-size:12px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.08em; font-weight:600; }
+  .stat .value{ font-family:'Space Grotesk'; font-size:26px; font-weight:700; margin-top:6px; color:var(--teal-deep); }
+  .stat .value.up{ color:var(--grass); }
+  .stat .value.down{ color:var(--danger); }
+
+  .two-col{ display:grid; grid-template-columns:1.3fr 1fr; gap:18px; align-items:start; }
+  @media (max-width:900px){ .two-col{ grid-template-columns:1fr; } .stats-row{ grid-template-columns:repeat(2,1fr);} }
+
+  .section-title{ font-size:15px; font-weight:700; color:var(--teal-deep); margin:0 0 14px; display:flex; align-items:center; gap:8px; }
+
+  /* job pill / list rows */
+  .job-row{ display:flex; align-items:center; gap:12px; padding:11px 4px; border-bottom:1px solid var(--line); }
+  .job-row:last-child{ border-bottom:none; }
+  .job-dot{ width:9px; height:9px; border-radius:50%; background:var(--grass); flex-shrink:0; }
+  .job-dot.done{ background:var(--ink-soft); }
+  .job-row .who{ font-weight:600; font-size:14px; }
+  .job-row .meta{ font-size:12.5px; color:var(--ink-soft); }
+  .job-row .when{ margin-left:auto; font-size:12.5px; color:var(--ink-soft); font-family:'Space Mono'; }
+  .empty{ color:var(--ink-soft); font-size:13.5px; padding:14px 4px; }
+
+  /* tables */
+  table{ width:100%; border-collapse:collapse; font-size:13.5px; }
+  th{ text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft); padding:0 12px 10px; font-weight:600; }
+  td{ padding:12px; background:var(--panel); border-top:1px solid var(--line); }
+  tr:hover td{ background:#f6f9f6; }
+  .table-wrap{ overflow-x:auto; }
+  td.num{ font-family:'Space Mono'; text-align:right; }
+  th.num{ text-align:right; }
+
+  .pill{ display:inline-flex; align-items:center; padding:3px 9px; border-radius:100px; font-size:11.5px; font-weight:600; }
+  .pill.income{ background:var(--grass-soft); color:#2e5c2d; }
+  .pill.expense{ background:var(--danger-soft); color:#8a3a2c; }
+  .pill.day{ background:var(--sun-soft); color:#7a5a12; }
+
+  .row-actions{ display:flex; gap:6px; justify-content:flex-end; }
+  .icon-btn{ background:none; border:none; cursor:pointer; padding:5px; border-radius:7px; color:var(--ink-soft); }
+  .icon-btn:hover{ background:var(--grass-soft); color:var(--teal-deep); }
+  .icon-btn.del:hover{ background:var(--danger-soft); color:var(--danger); }
+  .icon-btn svg{ width:16px; height:16px; display:block; }
+
+  .search-row{ display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+  input[type=text], input[type=number], input[type=date], input[type=tel], input[type=email], select, textarea{
+    font-family:'Inter'; font-size:14px; padding:10px 12px; border:1px solid var(--line); border-radius:9px;
+    background:#fbfcfb; color:var(--ink); width:100%;
+  }
+  input:focus, select:focus, textarea:focus{ outline:2px solid var(--grass); outline-offset:1px; border-color:var(--grass); }
+  label{ font-size:12.5px; font-weight:600; color:var(--ink-soft); display:block; margin-bottom:5px; }
+  .field{ margin-bottom:14px; }
+  .field-row{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+  /* modal */
+  .modal-backdrop{
+    display:none; position:fixed; inset:0; background:rgba(11,25,23,.45);
+    z-index:100; align-items:flex-start; justify-content:center; overflow-y:auto; padding:40px 16px;
+  }
+  .modal-backdrop.open{ display:flex; }
+  .modal{
+    background:var(--panel); border-radius:16px; width:100%; max-width:520px;
+    box-shadow:0 20px 60px -20px rgba(0,0,0,.4); overflow:hidden;
+  }
+  .modal.wide{ max-width:760px; }
+  .modal-head{ display:flex; align-items:center; justify-content:space-between; padding:18px 22px; border-bottom:1px solid var(--line); }
+  .modal-head h3{ margin:0; font-size:17px; color:var(--teal-deep); }
+  .modal-body{ padding:20px 22px; max-height:70vh; overflow-y:auto; }
+  .modal-foot{ padding:16px 22px; border-top:1px solid var(--line); display:flex; justify-content:flex-end; gap:10px; }
+  .close-x{ background:none; border:none; cursor:pointer; color:var(--ink-soft); padding:4px; }
+
+  /* calendar */
+  .cal-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .cal-head .title{ font-family:'Space Grotesk'; font-size:18px; font-weight:700; color:var(--teal-deep); }
+  .cal-nav{ display:flex; gap:6px; }
+  .cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
+  .cal-dow{ font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft); text-align:center; padding-bottom:4px; font-weight:600; }
+  .cal-cell{
+    background:var(--panel); border:1px solid var(--line); border-radius:10px; min-height:92px;
+    padding:6px; cursor:pointer; display:flex; flex-direction:column; gap:3px; transition:border-color .15s;
+  }
+  .cal-cell:hover{ border-color:var(--grass); }
+  .cal-cell.other-month{ opacity:.35; }
+  .cal-cell.today{ border-color:var(--teal); border-width:2px; }
+  .cal-daynum{ font-size:12px; font-weight:700; color:var(--ink-soft); }
+  .cal-job{ font-size:10.5px; background:var(--grass-soft); color:#2e5c2d; border-radius:5px; padding:2px 5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .cal-job.done{ background:#e7e9e7; color:var(--ink-soft); text-decoration:line-through; }
+  @media (max-width:700px){ .cal-cell{ min-height:64px; } .cal-job{ display:none; } .cal-cell .job-count{ display:block; } }
+  .job-count{ display:none; font-size:10px; color:var(--grass); font-weight:700; }
+
+  /* quote calculator */
+  .quote-layout{ display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  @media (max-width:900px){ .quote-layout{ grid-template-columns:1fr; } }
+  .quote-result{ text-align:center; padding:26px 20px; }
+  .quote-result .amount{ font-family:'Space Grotesk'; font-size:44px; font-weight:700; color:var(--teal-deep); }
+  .quote-result .breakdown{ margin-top:14px; text-align:left; font-size:13px; }
+  .breakdown-row{ display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px dashed var(--line); color:var(--ink-soft); }
+  .breakdown-row:last-child{ border-bottom:none; font-weight:700; color:var(--ink); }
+
+  .tabs{ display:flex; gap:4px; background:#e4ebe4; padding:4px; border-radius:11px; margin-bottom:16px; width:fit-content; }
+  .tab{ border:none; background:none; padding:8px 16px; border-radius:8px; font-size:13.5px; font-weight:600; color:var(--ink-soft); cursor:pointer; }
+  .tab.active{ background:var(--panel); color:var(--teal-deep); box-shadow:var(--shadow); }
+
+  /* measure tool */
+  .measure-wrap{ position:relative; border-radius:12px; overflow:hidden; border:1px solid var(--line); background:#0000; }
+  #measureCanvas{ width:100%; display:block; cursor:crosshair; touch-action:none; }
+  .measure-hint{ font-size:12.5px; color:var(--ink-soft); background:var(--sun-soft); border:1px solid #ecd693; border-radius:9px; padding:9px 12px; margin-bottom:12px; }
+  .measure-controls{ display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
+  .drop-zone{
+    border:2px dashed var(--line); border-radius:12px; padding:30px 14px; text-align:center; color:var(--ink-soft);
+    cursor:pointer; font-size:13.5px;
+  }
+  .drop-zone:hover{ border-color:var(--grass); background:var(--grass-soft); }
+  .drop-zone svg{ width:26px; height:26px; margin-bottom:8px; color:var(--grass); }
+
+  .service-card{ display:flex; justify-content:space-between; align-items:center; padding:16px 18px; }
+  .service-card + .service-card{ border-top:1px solid var(--line); }
+  .service-card .sname{ font-weight:700; font-size:14.5px; }
+  .service-card .sdesc{ font-size:12.5px; color:var(--ink-soft); margin-top:2px; }
+  .service-card .sprice{ font-family:'Space Mono'; font-weight:700; color:var(--teal-deep); font-size:15px; }
+
+  .toast{
+    position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--teal-deep); color:#fff; padding:11px 20px; border-radius:10px; font-size:13.5px;
+    opacity:0; pointer-events:none; transition:all .25s ease; z-index:200; box-shadow:var(--shadow);
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  .cust-photo{ width:40px; height:40px; border-radius:9px; object-fit:cover; background:var(--grass-soft); flex-shrink:0; }
+  .avatar-fallback{ width:40px; height:40px; border-radius:9px; background:var(--teal); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; flex-shrink:0; }
+  .name-cell{ display:flex; align-items:center; gap:10px; }
+
+  ::-webkit-scrollbar{ width:9px; height:9px; }
+  ::-webkit-scrollbar-thumb{ background:#c3d2ca; border-radius:10px; }
+
+  @media (max-width:860px){
+    .sidebar{ transform:translateX(-100%); }
+    .sidebar.open{ transform:translateX(0); }
+    main{ margin-left:0; padding:20px 16px 50px; }
+    .topbar{ display:flex; }
+    .stats-row{ grid-template-columns:repeat(2,1fr); }
+  }
+
+  /* ---------- auth screens ---------- */
+  #authScreen{
+    position:fixed; inset:0; z-index:500; background:var(--teal-deep);
+    display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  #authScreen.hidden{ display:none; }
+  .auth-card{
+    background:var(--panel); border-radius:18px; width:100%; max-width:380px;
+    padding:30px 28px; box-shadow:0 20px 60px -20px rgba(0,0,0,.5);
+  }
+  .auth-card .auth-brand{ display:flex; align-items:center; gap:10px; margin-bottom:18px; }
+  .auth-card .auth-brand .name{ font-family:'Space Grotesk'; font-weight:700; font-size:20px; color:var(--teal-deep); }
+  .auth-card h2{ font-size:16px; margin:0 0 4px; color:var(--teal-deep); }
+  .auth-card p.hint{ font-size:12.5px; color:var(--ink-soft); margin:0 0 16px; }
+  .auth-error{ font-size:12.5px; color:var(--danger); margin:-6px 0 12px; display:none; }
+  .auth-error.show{ display:block; }
+  .auth-step{ display:none; }
+  .auth-step.active{ display:block; }
+  .company-list, .person-list{ display:flex; flex-direction:column; gap:8px; margin-bottom:14px; max-height:260px; overflow-y:auto; }
+  .pick-row{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:11px 13px; border:1px solid var(--line); border-radius:10px; cursor:pointer; background:#fbfcfb;
+  }
+  .pick-row:hover{ border-color:var(--grass); background:var(--grass-soft); }
+  .pick-row.selected{ border-color:var(--teal); background:var(--grass-soft); }
+  .pick-row .pr-name{ font-weight:600; font-size:14px; }
+  .pick-row .pr-sub{ font-size:11.5px; color:var(--ink-soft); }
+  .auth-back{ background:none; border:none; color:var(--ink-soft); font-size:12.5px; cursor:pointer; padding:0 0 12px; display:flex; align-items:center; gap:5px; }
+  .auth-back:hover{ color:var(--teal-deep); }
+
+  /* ---------- company switcher (sidebar) ---------- */
+  .brand{ position:relative; cursor:pointer; }
+  .brand:hover .brand-text .name{ color:#eaf3f1; }
+  .company-menu{
+    position:absolute; top:100%; left:12px; right:12px; margin-top:6px;
+    background:#fff; border-radius:11px; box-shadow:0 12px 30px -10px rgba(0,0,0,.35);
+    padding:6px; z-index:50; display:none;
+  }
+  .company-menu.open{ display:block; }
+  .company-menu button{
+    display:flex; width:100%; text-align:left; padding:9px 10px; border-radius:8px; border:none; background:none;
+    color:var(--ink); font-size:13.5px; cursor:pointer; gap:8px; align-items:center;
+  }
+  .company-menu button:hover{ background:var(--grass-soft); }
+  .company-menu .cm-current{ color:var(--teal-deep); font-weight:700; }
+  .company-menu hr{ border:none; border-top:1px solid var(--line); margin:5px 2px; }
+  .chev{ margin-left:auto; opacity:.7; width:14px; height:14px; }
+
+  /* ---------- employees ---------- */
+  .emp-card{ display:flex; justify-content:space-between; align-items:center; padding:16px 18px; }
+  .emp-card + .emp-card{ border-top:1px solid var(--line); }
+  .emp-card .ename{ font-weight:700; font-size:14.5px; }
+  .emp-card .erole{ font-size:12.5px; color:var(--ink-soft); margin-top:2px; }
+  .emp-card .epass{ font-family:'Space Mono'; font-size:13px; background:var(--sun-soft); color:#7a5a12; padding:3px 9px; border-radius:7px; }
+
+  /* ---------- quote calculator ---------- */
+  .qty-hint{ font-size:12px; color:var(--ink-soft); margin-top:4px; }
+  .checkbox-row{ display:flex; align-items:center; gap:8px; margin:6px 0 14px; }
+  .checkbox-row input[type=checkbox]{ width:16px; height:16px; }
+  .checkbox-row label{ margin:0; font-weight:600; color:var(--ink); font-size:13.5px; }
+</style>
+</head>
+<body>
+
+<!-- ============ AUTH OVERLAY ============ -->
+<div id="authScreen">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <svg width="30" height="30" viewBox="0 0 40 40" fill="none">
+        <circle cx="20" cy="20" r="19" stroke="#0b3d3b" stroke-width="1.4"/>
+        <path d="M20 8c5 6 9 10.8 9 15.6A9 9 0 0 1 11 23.6C11 18.8 15 14 20 8Z" fill="#4c8c4a"/>
+      </svg>
+      <div class="name">Aqua</div>
+    </div>
+
+    <!-- Step 1: site password -->
+    <div class="auth-step active" id="authStepSite">
+      <h2>Enter software password</h2>
+      <p class="hint">This protects the whole app if it's shared publicly.</p>
+      <div class="field"><input type="text" id="sitePassInput" placeholder="Password"></div>
+      <div class="auth-error" id="siteAuthError">That password isn't right.</div>
+      <button class="btn" style="width:100%;justify-content:center;" id="siteAuthBtn">Continue</button>
+    </div>
+
+    <!-- Step 2: pick / add company -->
+    <div class="auth-step" id="authStepCompany">
+      <h2>Which company?</h2>
+      <p class="hint">Pick your company, or add a new one.</p>
+      <div class="company-list" id="companyList"></div>
+      <button class="btn secondary" style="width:100%;justify-content:center;" id="addCompanyBtn">+ Add a company</button>
+    </div>
+
+    <!-- Step 2b: company password -->
+    <div class="auth-step" id="authStepCompanyPass">
+      <button class="auth-back" id="backToCompanyBtn">&larr; Back</button>
+      <h2 id="companyPassTitle">Company password</h2>
+      <p class="hint">Enter the password for this company.</p>
+      <div class="field"><input type="text" id="companyPassInput" placeholder="Password"></div>
+      <div class="auth-error" id="companyAuthError">That password isn't right.</div>
+      <button class="btn" style="width:100%;justify-content:center;" id="companyAuthBtn">Continue</button>
+    </div>
+
+    <!-- Step 3: pick person -->
+    <div class="auth-step" id="authStepPerson">
+      <button class="auth-back" id="backToCompanyPickBtn">&larr; Switch company</button>
+      <h2>Who's this?</h2>
+      <p class="hint">Owner/admin sees everything. Employees only see their own jobs.</p>
+      <div class="person-list" id="personList"></div>
+    </div>
+
+    <!-- Step 3b: employee password -->
+    <div class="auth-step" id="authStepEmployeePass">
+      <button class="auth-back" id="backToPersonBtn">&larr; Back</button>
+      <h2 id="employeePassTitle">Employee password</h2>
+      <div class="field"><input type="text" id="employeePassInput" placeholder="Password"></div>
+      <div class="auth-error" id="employeeAuthError">That password isn't right.</div>
+      <button class="btn" style="width:100%;justify-content:center;" id="employeeAuthBtn">Enter</button>
+    </div>
+  </div>
+</div>
+
+<div id="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand" id="brandSwitcher">
+      <svg class="brand-mark" viewBox="0 0 40 40" fill="none">
+        <circle cx="20" cy="20" r="19" stroke="#8fb8b3" stroke-width="1.4"/>
+        <path d="M20 8c5 6 9 10.8 9 15.6A9 9 0 0 1 11 23.6C11 18.8 15 14 20 8Z" fill="#4c8c4a"/>
+        <path d="M20 8c5 6 9 10.8 9 15.6A9 9 0 0 1 11 23.6C11 18.8 15 14 20 8Z" fill="#eaf3f1" opacity=".15"/>
+      </svg>
+      <div class="brand-text">
+        <div class="name">Aqua</div>
+        <div class="sub" id="brandCompanySub">Koveld</div>
+      </div>
+      <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="#8fb8b3" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      <div class="company-menu" id="companyMenu">
+        <button class="cm-current" id="cmCurrentLabel" disabled>Koveld</button>
+        <hr>
+        <button id="cmSwitchCompany">Switch company</button>
+        <button id="cmSwitchPerson">Switch person</button>
+        <hr>
+        <button id="cmLogout">Log out</button>
+      </div>
+    </div>
+    <nav class="nav" id="navList">
+      <button class="nav-item" data-view="dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="5" rx="2"/><rect x="13" y="11" width="8" height="10" rx="2"/><rect x="3" y="14" width="8" height="7" rx="2"/></svg>Dashboard</button>
+      <button class="nav-item" data-view="customers"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.5 2.7-6 6-6s6 2.5 6 6"/><circle cx="17.5" cy="9.5" r="2.4"/><path d="M15 20c0-2.6 1.6-4.6 4-5"/></svg>Customers</button>
+      <button class="nav-item" data-view="schedule"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Schedule</button>
+      <button class="nav-item" data-view="quotes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h9l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M9 12h6M9 16h6M9 8h3"/></svg>Quotes</button>
+      <button class="nav-item" data-view="services" id="navServices"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v3M12 18v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M3 12h3M18 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/><circle cx="12" cy="12" r="4.2"/></svg>Services</button>
+      <button class="nav-item" data-view="finances" id="navFinances"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>Finances</button>
+      <button class="nav-item" data-view="employees" id="navEmployees"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.5"/><path d="M5 21c0-4 3-6.5 7-6.5s7 2.5 7 6.5"/></svg>Employees</button>
+    </nav>
+    <div class="sidebar-foot" id="sidebarFoot">Koveld Lawn Care<br>Data saved on this device</div>
+  </aside>
+
+  <div style="flex:1; min-width:0;">
+    <div class="topbar">
+      <button id="menuBtn" aria-label="Menu">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <div style="font-family:'Space Grotesk';font-weight:700;">Aqua</div>
+      <div style="width:22px;"></div>
+    </div>
+
+    <main>
+
+      <!-- DASHBOARD -->
+      <section class="view" id="view-dashboard">
+        <div class="view-head">
+          <div>
+            <h1>Good to see you</h1>
+            <p id="dashDate"></p>
+          </div>
+          <button class="btn" data-open-job><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Schedule a job</button>
+        </div>
+
+        <div class="stats-row">
+          <div class="card stat"><div class="label">Customers</div><div class="value" id="statCustomers">0</div></div>
+          <div class="card stat"><div class="label">Jobs this week</div><div class="value" id="statJobs">0</div></div>
+          <div class="card stat"><div class="label">Income (month)</div><div class="value up" id="statIncome">$0</div></div>
+          <div class="card stat"><div class="label">Net (month)</div><div class="value" id="statNet">$0</div></div>
+        </div>
+
+        <div class="two-col">
+          <div class="card card-pad">
+            <div class="section-title">Today &amp; this week</div>
+            <div id="dashJobs"></div>
+          </div>
+          <div class="card card-pad">
+            <div class="section-title">Recent activity</div>
+            <div id="dashFinances"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CUSTOMERS -->
+      <section class="view" id="view-customers">
+        <div class="view-head">
+          <div>
+            <h1>Customers</h1>
+            <p>Every yard, every contact, in one place.</p>
+          </div>
+          <button class="btn" data-open-customer><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Add customer</button>
+        </div>
+        <div class="search-row">
+          <input type="text" id="custSearch" placeholder="Search by name, address, or phone..." style="max-width:340px;">
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Customer</th><th>Address</th><th>Service day</th><th class="num">Lawn (sqft)</th><th class="num">Price</th><th></th></tr></thead>
+              <tbody id="customerTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCHEDULE -->
+      <section class="view" id="view-schedule">
+        <div class="view-head">
+          <div>
+            <h1>Schedule</h1>
+            <p>See what's on the books for every day.</p>
+          </div>
+          <button class="btn" data-open-job><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Add job</button>
+        </div>
+        <div class="card card-pad">
+          <div class="cal-head">
+            <div class="cal-nav"><button class="icon-btn" id="calPrev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button></div>
+            <div class="title" id="calTitle"></div>
+            <div class="cal-nav"><button class="icon-btn" id="calNext"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></button></div>
+          </div>
+          <div class="cal-grid" id="calDow"></div>
+          <div class="cal-grid" id="calGrid" style="margin-top:6px;"></div>
+        </div>
+      </section>
+
+      <!-- QUOTES -->
+      <section class="view" id="view-quotes">
+        <div class="view-head">
+          <div>
+            <h1>Quotes</h1>
+            <p>Measure the lawn, pick a service, get a price.</p>
+          </div>
+          <button class="btn" data-open-quote><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>New quote</button>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Client / address</th><th>Service</th><th>Details</th><th class="num">Quoted price</th><th>Date</th><th></th></tr></thead>
+              <tbody id="quoteTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- SERVICES -->
+      <section class="view" id="view-services">
+        <div class="view-head">
+          <div>
+            <h1>Services &amp; pricing</h1>
+            <p>The rate book your quotes are calculated from.</p>
+          </div>
+          <button class="btn" data-open-service><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Add service</button>
+        </div>
+        <div class="card" id="serviceList"></div>
+      </section>
+
+      <!-- FINANCES -->
+      <section class="view" id="view-finances">
+        <div class="view-head">
+          <div>
+            <h1>Finances</h1>
+            <p>Income and expenses, tracked by month.</p>
+          </div>
+          <button class="btn" data-open-finance><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Add entry</button>
+        </div>
+        <div class="stats-row" style="grid-template-columns:repeat(3,1fr);">
+          <div class="card stat"><div class="label">Income</div><div class="value up" id="finIncome">$0</div></div>
+          <div class="card stat"><div class="label">Expenses</div><div class="value down" id="finExpense">$0</div></div>
+          <div class="card stat"><div class="label">Net profit</div><div class="value" id="finNet">$0</div></div>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Date</th><th>Type</th><th>Category</th><th>Note</th><th class="num">Amount</th><th></th></tr></thead>
+              <tbody id="financeTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- EMPLOYEES -->
+      <section class="view" id="view-employees">
+        <div class="view-head">
+          <div>
+            <h1>Employees</h1>
+            <p>Add employees and give each one their own password. They'll only see jobs assigned to them.</p>
+          </div>
+          <button class="btn" data-open-employee><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Add employee</button>
+        </div>
+        <div class="card" id="employeeList"></div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- ============ MODALS ============ -->
+
+<!-- Customer modal -->
+<div class="modal-backdrop" id="modalCustomer">
+  <div class="modal wide">
+    <div class="modal-head"><h3 id="customerModalTitle">Add customer</h3><button class="close-x" data-close><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="modal-body">
+      <input type="hidden" id="custId">
+      <div class="field-row">
+        <div class="field"><label>Full name</label><input type="text" id="custName" placeholder="Jamie Rivera"></div>
+        <div class="field"><label>Phone</label><input type="tel" id="custPhone" placeholder="(555) 555-0110"></div>
+      </div>
+      <div class="field"><label>Address</label><input type="text" id="custAddress" placeholder="118 Birchwood Ave"></div>
+      <div class="field"><label>Email</label><input type="email" id="custEmail" placeholder="jamie@email.com"></div>
+      <div class="field-row">
+        <div class="field"><label>Service day</label>
+          <select id="custDay">
+            <option value="">Not set</option>
+            <option>Monday</option><option>Tuesday</option><option>Wednesday</option>
+            <option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option>
+          </select>
+        </div>
+        <div class="field"><label>Frequency</label>
+          <select id="custFreq">
+            <option value="weekly">Weekly</option>
+            <option value="biweekly">Every 2 weeks</option>
+            <option value="monthly">Monthly</option>
+            <option value="onetime">One-time</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Lawn size (sqft)</label><input type="number" id="custSqft" placeholder="4500"></div>
+        <div class="field"><label>Price per visit ($)</label><input type="number" id="custPrice" placeholder="45"></div>
+      </div>
+      <div class="field"><label>Notes</label><textarea id="custNotes" rows="2" placeholder="Gate code, dog in yard, backyard has slope..."></textarea></div>
+      <div class="field">
+        <label>Photo</label>
+        <input type="file" id="custPhotoInput" accept="image/*">
+        <img id="custPhotoPreview" style="max-width:110px;border-radius:9px;margin-top:8px;display:none;">
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn secondary" data-close>Cancel</button>
+      <button class="btn" id="saveCustomerBtn">Save customer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Job modal -->
+<div class="modal-backdrop" id="modalJob">
+  <div class="modal">
+    <div class="modal-head"><h3>Schedule a job</h3><button class="close-x" data-close><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="modal-body">
+      <input type="hidden" id="jobId">
+      <div class="field"><label>Customer</label><select id="jobCustomer"></select></div>
+      <div class="field-row">
+        <div class="field"><label>Date</label><input type="date" id="jobDate"></div>
+        <div class="field"><label>Repeats</label>
+          <select id="jobRepeat">
+            <option value="none">Doesn't repeat</option>
+            <option value="weekly">Weekly (4 visits)</option>
+            <option value="biweekly">Every 2 weeks (4 visits)</option>
+            <option value="monthly">Monthly (3 visits)</option>
+          </select>
+        </div>
+      </div>
+      <div class="field"><label>Assigned to</label><select id="jobEmployee"><option value="">Unassigned</option></select></div>
+      <div class="field"><label>Notes</label><input type="text" id="jobNotes" placeholder="Anything to remember for this visit"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn secondary" data-close>Cancel</button>
+      <button class="btn" id="saveJobBtn">Add to schedule</button>
+    </div>
+  </div>
+</div>
+
+<!-- Employee modal -->
+<div class="modal-backdrop" id="modalEmployee">
+  <div class="modal">
+    <div class="modal-head"><h3 id="employeeModalTitle">Add employee</h3><button class="close-x" data-close><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="modal-body">
+      <input type="hidden" id="empId">
+      <div class="field"><label>Employee name</label><input type="text" id="empName" placeholder="Alex Rivera"></div>
+      <div class="field"><label>Password</label><input type="text" id="empPass" placeholder="e.g. ink45"></div>
+      <p class="hint" style="font-size:12px;color:var(--ink-soft);margin-top:-8px;">They'll enter this password (along with their name) to log in and see only their assigned jobs.</p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn secondary" data-close>Cancel</button>
+      <button class="btn" id="saveEmployeeBtn">Save employee</button>
+    </div>
+  </div>
+</div>
+
+<!-- Job detail modal -->
+<div class="modal-backdrop" id="modalJobDetail">
+  <div class="modal">
+    <div class="modal-head"><h3 id="jobDetailTitle">Jobs on this day</h3><button class="close-x" data-close><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="modal-body" id="jobDetailBody"></div>
+    <div class="modal-foot">
+      <button class="btn secondary" data-close>Close</button>
+      <button class="btn" id="addJobForDayBtn">Add job for this day</button>
+    </div>
+  </div>
+</div>
+
+<!-- Service modal -->
+<div class="modal-backdrop" id="modalService">
+  <div class="modal">
+    <div class="modal-head"><h3 id="serviceModalTitle">Add service</h3><button class="close-x" data-close><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="modal-body">
+      <input type="hidden" id="svcId">
+      <div class="field"><label>Service name</label><input type="text" id="svcName" placeholder="Lawn mowing"></div>
+      <div class="field"><label>Description</label><input type="text" id="svcDesc" placeholder="Mow, edge, and blow clippings off hard surfaces"></div>
+      <div class="field"><label>Pricing model</label>
+        <select id="svcModel">
+          <option value="lawn">Lawn (per sqft, with minimum + overgrown fee)</option>
+          <option value="bush_clear">Bush clearing (per bush)</option>
+          <option value="bush_trim">Bush trimming (per bush)</option>
+          <option value="mulch">Mulch (bag calculator)</option>
+          <option value="hour">Per hour</option>
+          <option value="flat">Flat rate</option>
+        </select>
+      </div>
+      <div class="field-row">
+        <div class="field"><label id="svcRateLabel">Rate ($ per sqft)</label><input type="number" id="svcRate" placeholder="0.02" step="0.001"></div>
+        <div class="field"><label id="svcBaseLabel">Minimum price ($)</label><input type="number" id="svcBase" placeholder="35"></div>
+      </div>
+      <div class="field" id="svcFeeField"><label>Overgrown lawn fee ($)</label><input type="number" id="svcFee" placeholder="75"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn secondary" data-close>Cancel</button>
+      <button class="btn" id="saveServiceBtn">Save service</button>
+    </div>
+  </div>
+</div>
+
+<!-- Finance modal -->
+<div class="modal-backdrop" id="modalFinance">
+  <div class="modal">
+    <div class="modal-head"><h3>Add finance entry</h3><button class="close-x" data-close><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="modal-body">
+      <div class="tabs">
+        <button class="tab active" data-fin-type="income">Income</button>
+        <button class="tab" data-fin-type="expense">Expense</button>
+      </div>
+      <input type="hidden" id="finType" value="income">
+      <div class="field-row">
+        <div class="field"><label>Amount ($)</label><input type="number" id="finAmount" placeholder="150"></div>
+        <div class="field"><label>Date</label><input type="date" id="finDate"></div>
+      </div>
+      <div class="field"><label>Category</label>
+        <select id="finCategory">
+          <option>Mowing payment</option><option>Quote deposit</option><option>Other income</option>
+          <option>Gas</option><option>Equipment</option><option>Repairs</option><option>Supplies</option><option>Other expense</option>
+        </select>
+      </div>
+      <div class="field"><label>Note</label><input type="text" id="finNote" placeholder="Optional detail"></div>
+      <div class="field"><label>Linked customer (optional)</label><select id="finCustomer"><option value="">None</option></select></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn secondary" data-close>Cancel</button>
+      <button class="btn" id="saveFinanceBtn">Save entry</button>
+    </div>
+  </div>
+</div>
+
+<!-- Quote modal -->
+<div class="modal-backdrop" id="modalQuote">
+  <div class="modal wide">
+    <div class="modal-head"><h3>New quote</h3><button class="close-x" data-close><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="modal-body">
+      <div class="field-row">
+        <div class="field"><label>Client name</label><input type="text" id="qName" placeholder="Name or existing customer"></div>
+        <div class="field"><label>Address</label><input type="text" id="qAddress" placeholder="Property address"></div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" data-quote-kind="lawn">Lawn Mowing</button>
+        <button class="tab" data-quote-kind="bush_clear">Bush Clearing</button>
+        <button class="tab" data-quote-kind="bush_trim">Bush Trimming</button>
+        <button class="tab" data-quote-kind="mulch">Mulch</button>
+      </div>
+
+      <!-- Lawn mowing fields -->
+      <div id="qFieldsLawn" class="quote-kind-fields">
+        <div class="field-row">
+          <div class="field"><label>Length (ft)</label><input type="number" id="qLawnLength" placeholder="60"></div>
+          <div class="field"><label>Width (ft)</label><input type="number" id="qLawnWidth" placeholder="35"></div>
+        </div>
+        <div class="checkbox-row"><input type="checkbox" id="qOvergrown"><label for="qOvergrown">Lawn is overgrown (adds surcharge)</label></div>
+        <div class="qty-hint">$35 minimum applies to every lawn job.</div>
+      </div>
+
+      <!-- Bush clearing fields -->
+      <div id="qFieldsBushClear" class="quote-kind-fields" style="display:none;">
+        <div class="field"><label>Number of bushes to clear</label><input type="number" id="qBushClearQty" placeholder="4" min="0"></div>
+        <div class="qty-hint" id="qBushClearRateHint"></div>
+      </div>
+
+      <!-- Bush trimming fields -->
+      <div id="qFieldsBushTrim" class="quote-kind-fields" style="display:none;">
+        <div class="field"><label>Number of bushes to trim</label><input type="number" id="qBushTrimQty" placeholder="4" min="0"></div>
+        <div class="qty-hint" id="qBushTrimRateHint"></div>
+      </div>
+
+      <!-- Mulch fields -->
+      <div id="qFieldsMulch" class="quote-kind-fields" style="display:none;">
+        <div class="field-row">
+          <div class="field"><label>Length (ft)</label><input type="number" id="qMulchLength" placeholder="4"></div>
+          <div class="field"><label>Width (ft)</label><input type="number" id="qMulchWidth" placeholder="23"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Bag price ($)</label><input type="number" id="qMulchBagPrice" placeholder="9" step="0.01"></div>
+          <div class="field"><label>Coverage per bag (sqft)</label><input type="number" id="qMulchCoverage" placeholder="8"></div>
+        </div>
+        <div class="qty-hint">Standard 2 cu ft bags cover about 8 sqft at 3" depth — adjust if yours differ.</div>
+      </div>
+
+      <div class="quote-layout" style="margin-top:18px;">
+        <div class="field"><label>Notes</label><textarea id="qNotes" rows="3" placeholder="Slope, obstacles, gate access..."></textarea></div>
+        <div class="card quote-result">
+          <div style="font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-soft);font-weight:600;">Estimated price</div>
+          <div class="amount" id="qAmount">$0</div>
+          <div class="breakdown" id="qBreakdown"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn secondary" data-close>Cancel</button>
+      <button class="btn" id="saveQuoteBtn">Save quote</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------- storage helpers ---------------- */
+  const store = {
+    get(key, fallback){ try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }catch(e){ return fallback; } },
+    set(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
+  };
+
+  function uid(){ return Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4); }
+
+  /* ---------------- site / company / employee auth ---------------- *
+   * NOTE: this is a front-end-only password gate (no server), so treat
+   * it as a light lock to keep casual visitors out — not real security.
+   */
+  const SITE_PASSWORD = 'Aqua-Guard26';
+  const COMPANIES_KEY = 'aqua_companies';
+
+  function loadCompanies(){
+    return store.get(COMPANIES_KEY, { 'Koveld': { password: 'JackA$$' } });
+  }
+  function saveCompanies(obj){ store.set(COMPANIES_KEY, obj); }
+
+  function keyFor(company, part){ return 'aqua_' + part + '__' + company; }
+
+  function loadEmployees(company){ return store.get(keyFor(company,'employees'), []); }
+  function saveEmployeesFor(company, list){ store.set(keyFor(company,'employees'), list); }
+
+  let currentCompany = null;   // company name (string)
+  let currentEmployee = null;  // {id,name} or null (null = owner/admin)
+
+  const defaultServices = [
+    { id: uid(), name:'Lawn Mowing', desc:'Standard mow, edge, and blow-off', model:'lawn', rate:0.02, base:35, fee:75 },
+    { id: uid(), name:'Bush Clearing', desc:'Remove overgrown or unwanted bushes', model:'bush_clear', rate:20, base:0 },
+    { id: uid(), name:'Bush Trimming', desc:'Shape and trim existing bushes', model:'bush_trim', rate:10, base:0 },
+    { id: uid(), name:'Mulch Installation', desc:'Spread mulch, priced by bags needed', model:'mulch', rate:9, base:8 }
+  ];
+
+  let customers = [], services = [], jobs = [], finances = [], quotes = [], employees = [];
+
+  function persist(){
+    if(!currentCompany) return;
+    store.set(keyFor(currentCompany,'customers'), customers);
+    store.set(keyFor(currentCompany,'services'), services);
+    store.set(keyFor(currentCompany,'jobs'), jobs);
+    store.set(keyFor(currentCompany,'finances'), finances);
+    store.set(keyFor(currentCompany,'quotes'), quotes);
+  }
+
+  function loadCompanyData(company){
+    currentCompany = company;
+    customers = store.get(keyFor(company,'customers'), []);
+    services = store.get(keyFor(company,'services'), defaultServices);
+    jobs = store.get(keyFor(company,'jobs'), []);
+    finances = store.get(keyFor(company,'finances'), []);
+    quotes = store.get(keyFor(company,'quotes'), []);
+    employees = loadEmployees(company);
+  }
+
+  function fmtMoney(n){
+    n = Number(n) || 0;
+    return '$' + n.toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 });
+  }
+  function fmtMoneyShort(n){
+    n = Number(n) || 0;
+    return '$' + Math.round(n).toLocaleString('en-US');
+  }
+  function toast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toast._h);
+    toast._h = setTimeout(()=> t.classList.remove('show'), 2200);
+  }
+  function escapeHtml(s){
+    return (s||'').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function todayISO(){ return new Date().toISOString().slice(0,10); }
+  function initials(name){
+    return (name||'?').split(' ').filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('');
+  }
+
+  /* ---------------- navigation ---------------- */
+  const views = ['dashboard','customers','schedule','quotes','services','finances','employees'];
+  function showView(name){
+    // employees can't reach admin-only views
+    if(currentEmployee && (name==='finances' || name==='services' || name==='employees')) name = 'dashboard';
+    views.forEach(v=>{
+      document.getElementById('view-'+v).classList.toggle('active', v===name);
+    });
+    document.querySelectorAll('.nav-item').forEach(b=>{
+      b.classList.toggle('active', b.dataset.view === name);
+    });
+    document.getElementById('sidebar').classList.remove('open');
+    if(name==='dashboard') renderDashboard();
+    if(name==='customers') renderCustomers();
+    if(name==='schedule') renderCalendar();
+    if(name==='quotes') renderQuotes();
+    if(name==='services') renderServices();
+    if(name==='finances') renderFinances();
+    if(name==='employees') renderEmployees();
+  }
+  function applySessionNavVisibility(){
+    const adminOnly = ['navServices','navFinances','navEmployees'];
+    adminOnly.forEach(id=>{
+      document.getElementById(id).style.display = currentEmployee ? 'none' : 'flex';
+    });
+  }
+  document.getElementById('navList').addEventListener('click', e=>{
+    const btn = e.target.closest('.nav-item');
+    if(btn) showView(btn.dataset.view);
+  });
+  document.getElementById('menuBtn').addEventListener('click', ()=>{
+    document.getElementById('sidebar').classList.toggle('open');
+  });
+
+  /* ---------------- modal helpers ---------------- */
+  function openModal(id){ document.getElementById(id).classList.add('open'); }
+  function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+  document.querySelectorAll('[data-close]').forEach(el=>{
+    el.addEventListener('click', ()=> el.closest('.modal-backdrop').classList.remove('open'));
+  });
+  document.querySelectorAll('.modal-backdrop').forEach(el=>{
+    el.addEventListener('click', e=>{ if(e.target === el) el.classList.remove('open'); });
+  });
+
+  /* =========================================================
+     DASHBOARD
+  ========================================================= */
+  function renderDashboard(){
+    document.getElementById('dashDate').textContent = new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
+    document.getElementById('statCustomers').textContent = customers.length;
+
+    const now = new Date();
+    const weekEnd = new Date(now); weekEnd.setDate(now.getDate()+7);
+    const upcoming = jobs.filter(j=>{
+      const d = new Date(j.date+'T00:00:00');
+      if(currentEmployee && j.assignedTo !== currentEmployee.id) return false;
+      return d >= stripTime(now) && d <= weekEnd;
+    }).sort((a,b)=> a.date.localeCompare(b.date));
+    document.getElementById('statJobs').textContent = upcoming.length;
+
+    const ym = now.toISOString().slice(0,7);
+    const monthFin = finances.filter(f=> f.date.slice(0,7) === ym);
+    const inc = monthFin.filter(f=>f.type==='income').reduce((s,f)=>s+Number(f.amount),0);
+    const exp = monthFin.filter(f=>f.type==='expense').reduce((s,f)=>s+Number(f.amount),0);
+    document.getElementById('statIncome').textContent = fmtMoneyShort(inc);
+    const netEl = document.getElementById('statNet');
+    netEl.textContent = fmtMoneyShort(inc-exp);
+    netEl.className = 'value ' + (inc-exp>=0 ? 'up':'down');
+
+    const jobsWrap = document.getElementById('dashJobs');
+    if(upcoming.length===0){
+      jobsWrap.innerHTML = '<div class="empty">No jobs scheduled in the next 7 days.</div>';
+    }else{
+      jobsWrap.innerHTML = upcoming.slice(0,8).map(j=>{
+        const c = customers.find(c=>c.id===j.customerId);
+        const d = new Date(j.date+'T00:00:00');
+        const isToday = d.toDateString() === now.toDateString();
+        return `<div class="job-row">
+          <div class="job-dot ${j.done?'done':''}"></div>
+          <div><div class="who">${escapeHtml(c?c.name:'Unknown customer')}</div><div class="meta">${escapeHtml(c?c.address:'')}</div></div>
+          <div class="when">${isToday?'Today':d.toLocaleDateString('en-US',{weekday:'short', month:'short', day:'numeric'})}</div>
+        </div>`;
+      }).join('');
+    }
+
+    const finWrap = document.getElementById('dashFinances');
+    const recent = [...finances].sort((a,b)=> b.date.localeCompare(a.date)).slice(0,8);
+    if(recent.length===0){
+      finWrap.innerHTML = '<div class="empty">No income or expenses logged yet.</div>';
+    }else{
+      finWrap.innerHTML = recent.map(f=> `<div class="job-row">
+        <span class="pill ${f.type}">${f.type==='income'?'+':'-'}</span>
+        <div><div class="who">${escapeHtml(f.category)}</div><div class="meta">${escapeHtml(f.note||'')}</div></div>
+        <div class="when">${fmtMoneyShort(f.amount)}</div>
+      </div>`).join('');
+    }
+  }
+  function stripTime(d){ const n = new Date(d); n.setHours(0,0,0,0); return n; }
+
+  /* =========================================================
+     CUSTOMERS
+  ========================================================= */
+  function renderCustomers(){
+    const q = (document.getElementById('custSearch').value||'').toLowerCase();
+    const tbody = document.getElementById('customerTable');
+    const list = customers.filter(c=>{
+      if(!q) return true;
+      return (c.name+c.address+c.phone).toLowerCase().includes(q);
+    });
+    if(list.length===0){
+      tbody.innerHTML = `<tr><td colspan="6" class="empty">No customers yet. Add your first one to get started.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = list.map(c=>{
+      const photo = c.photo
+        ? `<img class="cust-photo" src="${c.photo}">`
+        : `<div class="avatar-fallback">${escapeHtml(initials(c.name))}</div>`;
+      return `<tr>
+        <td><div class="name-cell">${photo}<div><div style="font-weight:600;">${escapeHtml(c.name)}</div><div style="font-size:12px;color:var(--ink-soft);">${escapeHtml(c.phone||'')}</div></div></div></td>
+        <td>${escapeHtml(c.address||'—')}</td>
+        <td>${c.day ? `<span class="pill day">${escapeHtml(c.day)}</span>` : '—'}</td>
+        <td class="num">${c.sqft ? Number(c.sqft).toLocaleString() : '—'}</td>
+        <td class="num">${c.price ? fmtMoney(c.price) : '—'}</td>
+        <td><div class="row-actions">
+          <button class="icon-btn" data-edit-customer="${c.id}" title="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+          <button class="icon-btn del" data-del-customer="${c.id}" title="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></button>
+        </div></td>
+      </tr>`;
+    }).join('');
+  }
+  document.getElementById('custSearch').addEventListener('input', renderCustomers);
+
+  document.querySelectorAll('[data-open-customer]').forEach(b=> b.addEventListener('click', ()=> openCustomerModal()));
+
+  function openCustomerModal(id){
+    const c = id ? customers.find(c=>c.id===id) : null;
+    document.getElementById('customerModalTitle').textContent = c ? 'Edit customer' : 'Add customer';
+    document.getElementById('custId').value = c ? c.id : '';
+    document.getElementById('custName').value = c ? c.name : '';
+    document.getElementById('custPhone').value = c ? c.phone||'' : '';
+    document.getElementById('custAddress').value = c ? c.address||'' : '';
+    document.getElementById('custEmail').value = c ? c.email||'' : '';
+    document.getElementById('custDay').value = c ? c.day||'' : '';
+    document.getElementById('custFreq').value = c ? c.freq||'weekly' : 'weekly';
+    document.getElementById('custSqft').value = c ? c.sqft||'' : '';
+    document.getElementById('custPrice').value = c ? c.price||'' : '';
+    document.getElementById('custNotes').value = c ? c.notes||'' : '';
+    const preview = document.getElementById('custPhotoPreview');
+    if(c && c.photo){ preview.src = c.photo; preview.style.display='block'; } else { preview.style.display='none'; preview.src=''; }
+    document.getElementById('custPhotoInput').value = '';
+    openModal('modalCustomer');
+  }
+  document.getElementById('custPhotoInput').addEventListener('change', function(){
+    const f = this.files[0];
+    if(!f) return;
+    const reader = new FileReader();
+    reader.onload = e=>{
+      const preview = document.getElementById('custPhotoPreview');
+      preview.src = e.target.result; preview.style.display='block';
+    };
+    reader.readAsDataURL(f);
+  });
+  document.getElementById('saveCustomerBtn').addEventListener('click', ()=>{
+    const name = document.getElementById('custName').value.trim();
+    if(!name){ toast('Give the customer a name first'); return; }
+    const id = document.getElementById('custId').value || uid();
+    const existing = customers.find(c=>c.id===id);
+    const preview = document.getElementById('custPhotoPreview');
+    const rec = {
+      id,
+      name,
+      phone: document.getElementById('custPhone').value.trim(),
+      address: document.getElementById('custAddress').value.trim(),
+      email: document.getElementById('custEmail').value.trim(),
+      day: document.getElementById('custDay').value,
+      freq: document.getElementById('custFreq').value,
+      sqft: document.getElementById('custSqft').value,
+      price: document.getElementById('custPrice').value,
+      notes: document.getElementById('custNotes').value.trim(),
+      photo: preview.style.display!=='none' ? preview.src : (existing ? existing.photo : '')
+    };
+    if(existing){ Object.assign(existing, rec); } else { customers.push(rec); }
+    persist();
+    closeModal('modalCustomer');
+    renderCustomers(); populateCustomerSelects();
+    toast('Customer saved');
+  });
+  document.getElementById('customerTable').addEventListener('click', e=>{
+    const editId = e.target.closest('[data-edit-customer]');
+    const delId = e.target.closest('[data-del-customer]');
+    if(editId) openCustomerModal(editId.dataset.editCustomer);
+    if(delId){
+      if(confirm('Delete this customer? This will not remove past jobs or finance history.')){
+        customers = customers.filter(c=>c.id!==delId.dataset.delCustomer);
+        persist(); renderCustomers(); populateCustomerSelects();
+        toast('Customer deleted');
+      }
+    }
+  });
+
+  function populateCustomerSelects(){
+    const opts = ['<option value="">Select a customer</option>'].concat(
+      customers.map(c=> `<option value="${c.id}">${escapeHtml(c.name)}</option>`)
+    ).join('');
+    document.getElementById('jobCustomer').innerHTML = opts;
+    document.getElementById('finCustomer').innerHTML = '<option value="">None</option>' + customers.map(c=> `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+  }
+
+  /* =========================================================
+     SCHEDULE / CALENDAR
+  ========================================================= */
+  let calDate = new Date();
+  function renderCalendar(){
+    const year = calDate.getFullYear(), month = calDate.getMonth();
+    document.getElementById('calTitle').textContent = calDate.toLocaleDateString('en-US',{month:'long', year:'numeric'});
+    const dowEl = document.getElementById('calDow');
+    dowEl.innerHTML = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>`<div class="cal-dow">${d}</div>`).join('');
+
+    const first = new Date(year, month, 1);
+    const startOffset = first.getDay();
+    const daysInMonth = new Date(year, month+1, 0).getDate();
+    const daysInPrevMonth = new Date(year, month, 0).getDate();
+    const today = new Date();
+
+    let cells = [];
+    for(let i=0;i<startOffset;i++){
+      const dnum = daysInPrevMonth - startOffset + 1 + i;
+      cells.push({ dnum, iso: isoFor(year, month-1, dnum), other:true });
+    }
+    for(let d=1; d<=daysInMonth; d++){
+      cells.push({ dnum:d, iso: isoFor(year, month, d), other:false });
+    }
+    while(cells.length % 7 !== 0 || cells.length < 42){
+      const idx = cells.length - (startOffset + daysInMonth) + 1;
+      cells.push({ dnum: idx, iso: isoFor(year, month+1, idx), other:true });
+      if(cells.length>=42) break;
+    }
+
+    const grid = document.getElementById('calGrid');
+    grid.innerHTML = cells.map(cell=>{
+      const dayJobs = jobs.filter(j=>j.date===cell.iso && (!currentEmployee || j.assignedTo===currentEmployee.id));
+      const isToday = cell.iso === todayISO();
+      const jobHtml = dayJobs.slice(0,3).map(j=>{
+        const c = customers.find(c=>c.id===j.customerId);
+        return `<div class="cal-job ${j.done?'done':''}">${escapeHtml(c?c.name:'Job')}</div>`;
+      }).join('');
+      const more = dayJobs.length>3 ? `<div class="cal-job">+${dayJobs.length-3} more</div>` : '';
+      const countBadge = dayJobs.length ? `<div class="job-count">${dayJobs.length} job${dayJobs.length>1?'s':''}</div>` : '';
+      return `<div class="cal-cell ${cell.other?'other-month':''} ${isToday?'today':''}" data-day="${cell.iso}">
+        <div class="cal-daynum">${cell.dnum}</div>
+        ${jobHtml}${more}${countBadge}
+      </div>`;
+    }).join('');
+  }
+  function isoFor(y,m,d){
+    const date = new Date(y, m, d);
+    return date.toISOString().slice(0,10);
+  }
+  document.getElementById('calPrev').addEventListener('click', ()=>{ calDate.setMonth(calDate.getMonth()-1); renderCalendar(); });
+  document.getElementById('calNext').addEventListener('click', ()=>{ calDate.setMonth(calDate.getMonth()+1); renderCalendar(); });
+
+  let selectedDay = null;
+  document.getElementById('calGrid').addEventListener('click', e=>{
+    const cell = e.target.closest('.cal-cell');
+    if(!cell) return;
+    selectedDay = cell.dataset.day;
+    openJobDetail(selectedDay);
+  });
+
+  function openJobDetail(iso){
+    const dayJobs = jobs.filter(j=>j.date===iso && (!currentEmployee || j.assignedTo===currentEmployee.id));
+    document.getElementById('jobDetailTitle').textContent = new Date(iso+'T00:00:00').toLocaleDateString('en-US',{weekday:'long', month:'long', day:'numeric'});
+    const body = document.getElementById('jobDetailBody');
+    if(dayJobs.length===0){
+      body.innerHTML = '<div class="empty">Nothing scheduled yet.</div>';
+    }else{
+      body.innerHTML = dayJobs.map(j=>{
+        const c = customers.find(c=>c.id===j.customerId);
+        return `<div class="job-row">
+          <div class="job-dot ${j.done?'done':''}"></div>
+          <div><div class="who">${escapeHtml(c?c.name:'Unknown')}</div><div class="meta">${escapeHtml(c?c.address:'')}${j.notes? ' · '+escapeHtml(j.notes):''}</div></div>
+          <div class="row-actions">
+            <button class="icon-btn" data-toggle-job="${j.id}" title="Toggle done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 12l5 5L20 6"/></svg></button>
+            <button class="icon-btn del" data-del-job="${j.id}" title="Remove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></button>
+          </div>
+        </div>`;
+      }).join('');
+    }
+    openModal('modalJobDetail');
+  }
+  document.getElementById('jobDetailBody').addEventListener('click', e=>{
+    const t = e.target.closest('[data-toggle-job]');
+    const d = e.target.closest('[data-del-job]');
+    if(t){ const j = jobs.find(j=>j.id===t.dataset.toggleJob); if(j){ j.done=!j.done; persist(); openJobDetail(selectedDay); renderCalendar(); renderDashboard(); } }
+    if(d){ jobs = jobs.filter(j=>j.id!==d.dataset.delJob); persist(); openJobDetail(selectedDay); renderCalendar(); renderDashboard(); }
+  });
+  document.getElementById('addJobForDayBtn').addEventListener('click', ()=>{
+    closeModal('modalJobDetail');
+    openJobModal(selectedDay);
+  });
+
+  document.querySelectorAll('[data-open-job]').forEach(b=> b.addEventListener('click', ()=> openJobModal()));
+  function populateJobEmployeeSelect(){
+    const sel = document.getElementById('jobEmployee');
+    sel.innerHTML = '<option value="">Unassigned</option>' + employees.map(e=> `<option value="${e.id}">${escapeHtml(e.name)}</option>`).join('');
+  }
+  function openJobModal(iso){
+    populateCustomerSelects();
+    populateJobEmployeeSelect();
+    document.getElementById('jobId').value = '';
+    document.getElementById('jobCustomer').value = '';
+    document.getElementById('jobDate').value = iso || todayISO();
+    document.getElementById('jobRepeat').value = 'none';
+    document.getElementById('jobEmployee').value = currentEmployee ? currentEmployee.id : '';
+    document.getElementById('jobNotes').value = '';
+    openModal('modalJob');
+  }
+  document.getElementById('saveJobBtn').addEventListener('click', ()=>{
+    const customerId = document.getElementById('jobCustomer').value;
+    const date = document.getElementById('jobDate').value;
+    if(!customerId || !date){ toast('Pick a customer and date'); return; }
+    const notes = document.getElementById('jobNotes').value.trim();
+    const repeat = document.getElementById('jobRepeat').value;
+    const assignedTo = document.getElementById('jobEmployee').value || null;
+    const base = new Date(date+'T00:00:00');
+    const occurrences = { none:1, weekly:4, biweekly:4, monthly:3 }[repeat];
+    const stepDays = { none:0, weekly:7, biweekly:14, monthly:30 }[repeat];
+    for(let i=0;i<occurrences;i++){
+      const d = new Date(base); d.setDate(d.getDate() + stepDays*i);
+      jobs.push({ id: uid(), customerId, date: d.toISOString().slice(0,10), notes, assignedTo, done:false });
+    }
+    persist();
+    closeModal('modalJob');
+    renderCalendar(); renderDashboard();
+    toast(occurrences>1 ? `${occurrences} jobs scheduled` : 'Job scheduled');
+  });
+
+  /* =========================================================
+     SERVICES
+  ========================================================= */
+  function priceLabelFor(s){
+    if(s.model==='lawn') return `$${s.rate}/sqft · $${s.base} min · $${s.fee||0} overgrown fee`;
+    if(s.model==='bush_clear') return `$${s.rate}/bush`;
+    if(s.model==='bush_trim') return `$${s.rate}/bush`;
+    if(s.model==='mulch') return `$${s.rate}/bag · covers ${s.base} sqft`;
+    if(s.model==='hour') return `$${s.rate}/hour`;
+    if(s.model==='flat') return `$${s.base} flat`;
+    return '';
+  }
+  function renderServices(){
+    const wrap = document.getElementById('serviceList');
+    if(services.length===0){ wrap.innerHTML = '<div class="card-pad empty">No services yet.</div>'; return; }
+    wrap.innerHTML = services.map(s=>{
+      return `<div class="service-card">
+        <div><div class="sname">${escapeHtml(s.name)}</div><div class="sdesc">${escapeHtml(s.desc||'')}</div></div>
+        <div style="display:flex;align-items:center;gap:14px;">
+          <div class="sprice">${priceLabelFor(s)}</div>
+          <div class="row-actions">
+            <button class="icon-btn" data-edit-service="${s.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+            <button class="icon-btn del" data-del-service="${s.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  document.querySelectorAll('[data-open-service]').forEach(b=> b.addEventListener('click', ()=> openServiceModal()));
+  function updateServiceFieldLabels(){
+    const model = document.getElementById('svcModel').value;
+    const rateLabel = document.getElementById('svcRateLabel');
+    const baseLabel = document.getElementById('svcBaseLabel');
+    const feeField = document.getElementById('svcFeeField');
+    const labels = {
+      lawn:   ['Rate ($ per sqft)', 'Minimum price ($)'],
+      bush_clear: ['Rate ($ per bush)', 'Trip fee ($, optional)'],
+      bush_trim:  ['Rate ($ per bush)', 'Trip fee ($, optional)'],
+      mulch:  ['Default bag price ($)', 'Coverage per bag (sqft)'],
+      hour:   ['Rate ($ per hour)', 'Base fee ($, optional)'],
+      flat:   ['Rate (unused)', 'Flat rate ($)']
+    };
+    const pair = labels[model] || labels.flat;
+    rateLabel.textContent = pair[0];
+    baseLabel.textContent = pair[1];
+    feeField.style.display = model==='lawn' ? 'block' : 'none';
+  }
+  document.getElementById('svcModel').addEventListener('change', updateServiceFieldLabels);
+  function openServiceModal(id){
+    const s = id ? services.find(s=>s.id===id) : null;
+    document.getElementById('serviceModalTitle').textContent = s ? 'Edit service' : 'Add service';
+    document.getElementById('svcId').value = s ? s.id : '';
+    document.getElementById('svcName').value = s ? s.name : '';
+    document.getElementById('svcDesc').value = s ? s.desc||'' : '';
+    document.getElementById('svcModel').value = s ? s.model : 'lawn';
+    document.getElementById('svcRate').value = s ? s.rate : '';
+    document.getElementById('svcBase').value = s ? s.base : '';
+    document.getElementById('svcFee').value = s ? (s.fee||'') : '';
+    updateServiceFieldLabels();
+    openModal('modalService');
+  }
+  document.getElementById('saveServiceBtn').addEventListener('click', ()=>{
+    const name = document.getElementById('svcName').value.trim();
+    if(!name){ toast('Name the service first'); return; }
+    const id = document.getElementById('svcId').value || uid();
+    const existing = services.find(s=>s.id===id);
+    const rec = {
+      id, name,
+      desc: document.getElementById('svcDesc').value.trim(),
+      model: document.getElementById('svcModel').value,
+      rate: parseFloat(document.getElementById('svcRate').value)||0,
+      base: parseFloat(document.getElementById('svcBase').value)||0,
+      fee: parseFloat(document.getElementById('svcFee').value)||0
+    };
+    if(existing) Object.assign(existing, rec); else services.push(rec);
+    persist(); closeModal('modalService'); renderServices(); populateServiceSelect();
+    toast('Service saved');
+  });
+  document.getElementById('serviceList').addEventListener('click', e=>{
+    const editId = e.target.closest('[data-edit-service]');
+    const delId = e.target.closest('[data-del-service]');
+    if(editId) openServiceModal(editId.dataset.editService);
+    if(delId){
+      if(confirm('Delete this service?')){
+        services = services.filter(s=>s.id!==delId.dataset.delService);
+        persist(); renderServices(); populateServiceSelect();
+      }
+    }
+  });
+  function serviceFor(model){ return services.find(s=>s.model===model); }
+  function populateServiceSelect(){ /* kept for compatibility; quote calculator uses tabs by model instead */ }
+
+
+  /* =========================================================
+     FINANCES
+  ========================================================= */
+  function renderFinances(){
+    const inc = finances.filter(f=>f.type==='income').reduce((s,f)=>s+Number(f.amount),0);
+    const exp = finances.filter(f=>f.type==='expense').reduce((s,f)=>s+Number(f.amount),0);
+    document.getElementById('finIncome').textContent = fmtMoneyShort(inc);
+    document.getElementById('finExpense').textContent = fmtMoneyShort(exp);
+    const netEl = document.getElementById('finNet');
+    netEl.textContent = fmtMoneyShort(inc-exp);
+    netEl.className = 'value ' + (inc-exp>=0?'up':'down');
+
+    const tbody = document.getElementById('financeTable');
+    const sorted = [...finances].sort((a,b)=> b.date.localeCompare(a.date));
+    if(sorted.length===0){
+      tbody.innerHTML = '<tr><td colspan="6" class="empty">No entries yet. Log your first job payment or expense.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = sorted.map(f=> `<tr>
+      <td>${new Date(f.date+'T00:00:00').toLocaleDateString('en-US',{month:'short', day:'numeric', year:'numeric'})}</td>
+      <td><span class="pill ${f.type}">${f.type==='income'?'Income':'Expense'}</span></td>
+      <td>${escapeHtml(f.category)}</td>
+      <td>${escapeHtml(f.note||'—')}</td>
+      <td class="num">${f.type==='income'?'':'-'}${fmtMoney(f.amount)}</td>
+      <td><div class="row-actions"><button class="icon-btn del" data-del-fin="${f.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></button></div></td>
+    </tr>`).join('');
+  }
+  document.getElementById('financeTable').addEventListener('click', e=>{
+    const del = e.target.closest('[data-del-fin]');
+    if(del){ finances = finances.filter(f=>f.id!==del.dataset.delFin); persist(); renderFinances(); renderDashboard(); }
+  });
+  document.querySelectorAll('[data-open-finance]').forEach(b=> b.addEventListener('click', ()=>{
+    document.getElementById('finAmount').value = '';
+    document.getElementById('finDate').value = todayISO();
+    document.getElementById('finNote').value = '';
+    document.getElementById('finCustomer').value = '';
+    setFinType('income');
+    openModal('modalFinance');
+  }));
+  function setFinType(type){
+    document.getElementById('finType').value = type;
+    document.querySelectorAll('[data-fin-type]').forEach(t=> t.classList.toggle('active', t.dataset.finType===type));
+    const cat = document.getElementById('finCategory');
+    const incomeCats = ['Mowing payment','Quote deposit','Other income'];
+    const expenseCats = ['Gas','Equipment','Repairs','Supplies','Other expense'];
+    const cats = type==='income' ? incomeCats : expenseCats;
+    cat.innerHTML = cats.map(c=>`<option>${c}</option>`).join('');
+  }
+  document.querySelectorAll('[data-fin-type]').forEach(t=> t.addEventListener('click', ()=> setFinType(t.dataset.finType)));
+  document.getElementById('saveFinanceBtn').addEventListener('click', ()=>{
+    const amount = parseFloat(document.getElementById('finAmount').value);
+    const date = document.getElementById('finDate').value;
+    if(!amount || !date){ toast('Enter an amount and date'); return; }
+    finances.push({
+      id: uid(),
+      type: document.getElementById('finType').value,
+      amount,
+      date,
+      category: document.getElementById('finCategory').value,
+      note: document.getElementById('finNote').value.trim(),
+      customerId: document.getElementById('finCustomer').value || null
+    });
+    persist(); closeModal('modalFinance'); renderFinances(); renderDashboard();
+    toast('Entry saved');
+  });
+
+  /* =========================================================
+     QUOTES  +  CALCULATOR (lawn / bush clearing / bush trimming / mulch)
+  ========================================================= */
+  function renderQuotes(){
+    const tbody = document.getElementById('quoteTable');
+    if(quotes.length===0){
+      tbody.innerHTML = '<tr><td colspan="6" class="empty">No quotes yet. Create one to price your next job.</td></tr>';
+      return;
+    }
+    const sorted = [...quotes].sort((a,b)=> b.date.localeCompare(a.date));
+    tbody.innerHTML = sorted.map(q=> `<tr>
+      <td><div style="font-weight:600;">${escapeHtml(q.name||'Unnamed')}</div><div style="font-size:12px;color:var(--ink-soft);">${escapeHtml(q.address||'')}</div></td>
+      <td>${escapeHtml(q.serviceName||'')}</td>
+      <td>${escapeHtml(q.details||'—')}</td>
+      <td class="num">${fmtMoney(q.price)}</td>
+      <td>${new Date(q.date+'T00:00:00').toLocaleDateString('en-US',{month:'short', day:'numeric'})}</td>
+      <td><div class="row-actions"><button class="icon-btn del" data-del-quote="${q.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></button></div></td>
+    </tr>`).join('');
+  }
+  document.getElementById('quoteTable').addEventListener('click', e=>{
+    const del = e.target.closest('[data-del-quote]');
+    if(del){ quotes = quotes.filter(q=>q.id!==del.dataset.delQuote); persist(); renderQuotes(); }
+  });
+
+  document.querySelectorAll('[data-open-quote]').forEach(b=> b.addEventListener('click', ()=> openQuoteModal()));
+
+  const QUOTE_KIND_LABELS = { lawn:'Lawn Mowing', bush_clear:'Bush Clearing', bush_trim:'Bush Trimming', mulch:'Mulch' };
+  let quoteKind = 'lawn';
+
+  function openQuoteModal(){
+    document.getElementById('qName').value = '';
+    document.getElementById('qAddress').value = '';
+    document.getElementById('qNotes').value = '';
+    document.getElementById('qLawnLength').value = '';
+    document.getElementById('qLawnWidth').value = '';
+    document.getElementById('qOvergrown').checked = false;
+    document.getElementById('qBushClearQty').value = '';
+    document.getElementById('qBushTrimQty').value = '';
+    document.getElementById('qMulchLength').value = '';
+    document.getElementById('qMulchWidth').value = '';
+    const mulchSvc = serviceFor('mulch');
+    document.getElementById('qMulchBagPrice').value = mulchSvc ? mulchSvc.rate : 9;
+    document.getElementById('qMulchCoverage').value = mulchSvc ? mulchSvc.base : 8;
+    setQuoteKind('lawn');
+    openModal('modalQuote');
+  }
+
+  function setQuoteKind(kind){
+    quoteKind = kind;
+    document.querySelectorAll('[data-quote-kind]').forEach(t=> t.classList.toggle('active', t.dataset.quoteKind===kind));
+    document.getElementById('qFieldsLawn').style.display = kind==='lawn' ? 'block' : 'none';
+    document.getElementById('qFieldsBushClear').style.display = kind==='bush_clear' ? 'block' : 'none';
+    document.getElementById('qFieldsBushTrim').style.display = kind==='bush_trim' ? 'block' : 'none';
+    document.getElementById('qFieldsMulch').style.display = kind==='mulch' ? 'block' : 'none';
+    const clearSvc = serviceFor('bush_clear'), trimSvc = serviceFor('bush_trim');
+    document.getElementById('qBushClearRateHint').textContent = `Rate: $${clearSvc?clearSvc.rate:20}/bush (edit in Services)`;
+    document.getElementById('qBushTrimRateHint').textContent = `Rate: $${trimSvc?trimSvc.rate:10}/bush (edit in Services)`;
+    updateQuotePrice();
+  }
+  document.querySelectorAll('[data-quote-kind]').forEach(t=> t.addEventListener('click', ()=> setQuoteKind(t.dataset.quoteKind)));
+
+  ['qLawnLength','qLawnWidth','qBushClearQty','qBushTrimQty','qMulchLength','qMulchWidth','qMulchBagPrice','qMulchCoverage']
+    .forEach(id=> document.getElementById(id).addEventListener('input', updateQuotePrice));
+  document.getElementById('qOvergrown').addEventListener('change', updateQuotePrice);
+
+  function num(id){ return parseFloat(document.getElementById(id).value) || 0; }
+
+  function computeQuote(){
+    let price = 0, breakdown = [], details = '';
+    if(quoteKind==='lawn'){
+      const svc = serviceFor('lawn');
+      const rate = svc ? svc.rate : 0.02;
+      const min = svc ? svc.base : 35;
+      const fee = svc ? (svc.fee||0) : 75;
+      const L = num('qLawnLength'), W = num('qLawnWidth');
+      const area = L*W;
+      const raw = area*rate;
+      price = Math.max(raw, min);
+      breakdown.push([`${area.toLocaleString()} sqft × $${rate}/sqft`, raw]);
+      if(raw < min) breakdown.push([`$${min} minimum applied`, min]);
+      if(document.getElementById('qOvergrown').checked){
+        price += fee;
+        breakdown.push([`Overgrown lawn fee`, fee]);
+      }
+      details = `${area ? area.toLocaleString() : 0} sqft${document.getElementById('qOvergrown').checked ? ' · overgrown':''}`;
+    } else if(quoteKind==='bush_clear' || quoteKind==='bush_trim'){
+      const svc = serviceFor(quoteKind);
+      const rate = svc ? svc.rate : (quoteKind==='bush_clear' ? 20 : 10);
+      const qty = num(quoteKind==='bush_clear' ? 'qBushClearQty' : 'qBushTrimQty');
+      price = qty*rate;
+      breakdown.push([`${qty} bush${qty===1?'':'es'} × $${rate}`, price]);
+      details = `${qty} bush${qty===1?'':'es'}`;
+    } else if(quoteKind==='mulch'){
+      const L = num('qMulchLength'), W = num('qMulchWidth');
+      const area = L*W;
+      const bagPrice = num('qMulchBagPrice');
+      const coverage = num('qMulchCoverage') || 8;
+      const bags = area>0 ? Math.ceil(area/coverage) : 0;
+      price = bags*bagPrice;
+      breakdown.push([`${area.toLocaleString()} sqft ÷ ${coverage} sqft/bag`, `${bags} bag${bags===1?'':'s'} needed`, true]);
+      breakdown.push([`${bags} bag${bags===1?'':'s'} × $${bagPrice}`, price]);
+      details = `${bags} bag${bags===1?'':'s'} (${area.toLocaleString()} sqft)`;
+    }
+    breakdown.push(['Total', price]);
+    return { price, breakdown, details };
+  }
+
+  function updateQuotePrice(){
+    const { price, breakdown } = computeQuote();
+    document.getElementById('qAmount').textContent = fmtMoney(price);
+    document.getElementById('qBreakdown').innerHTML = breakdown.map(([label,val,isText])=>
+      `<div class="breakdown-row"><span>${label}</span><span>${isText ? escapeHtml(String(val)) : fmtMoney(val)}</span></div>`).join('');
+  }
+
+  document.getElementById('saveQuoteBtn').addEventListener('click', ()=>{
+    const { price, details } = computeQuote();
+    quotes.push({
+      id: uid(),
+      name: document.getElementById('qName').value.trim(),
+      address: document.getElementById('qAddress').value.trim(),
+      serviceName: QUOTE_KIND_LABELS[quoteKind],
+      details,
+      price: price || 0,
+      notes: document.getElementById('qNotes').value.trim(),
+      date: todayISO()
+    });
+    persist(); closeModal('modalQuote'); renderQuotes();
+    toast('Quote saved');
+  });
+
+  /* =========================================================
+     EMPLOYEES
+  ========================================================= */
+  function renderEmployees(){
+    const wrap = document.getElementById('employeeList');
+    if(employees.length===0){ wrap.innerHTML = '<div class="card-pad empty">No employees yet. Add one so they can log in and see their own jobs.</div>'; return; }
+    wrap.innerHTML = employees.map(e=> `<div class="emp-card">
+        <div><div class="ename">${escapeHtml(e.name)}</div><div class="erole">Password: <span class="epass">${escapeHtml(e.password)}</span></div></div>
+        <div class="row-actions">
+          <button class="icon-btn" data-edit-employee="${e.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+          <button class="icon-btn del" data-del-employee="${e.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></button>
+        </div>
+      </div>`).join('');
+  }
+  document.querySelectorAll('[data-open-employee]').forEach(b=> b.addEventListener('click', ()=> openEmployeeModal()));
+  function openEmployeeModal(id){
+    const e = id ? employees.find(e=>e.id===id) : null;
+    document.getElementById('employeeModalTitle').textContent = e ? 'Edit employee' : 'Add employee';
+    document.getElementById('empId').value = e ? e.id : '';
+    document.getElementById('empName').value = e ? e.name : '';
+    document.getElementById('empPass').value = e ? e.password : 'ink45';
+    openModal('modalEmployee');
+  }
+  document.getElementById('saveEmployeeBtn').addEventListener('click', ()=>{
+    const name = document.getElementById('empName').value.trim();
+    const password = document.getElementById('empPass').value.trim();
+    if(!name || !password){ toast('Give the employee a name and password'); return; }
+    const id = document.getElementById('empId').value || uid();
+    const existing = employees.find(e=>e.id===id);
+    const rec = { id, name, password };
+    if(existing) Object.assign(existing, rec); else employees.push(rec);
+    saveEmployeesFor(currentCompany, employees);
+    closeModal('modalEmployee'); renderEmployees(); populateJobEmployeeSelect();
+    toast('Employee saved');
+  });
+  document.getElementById('employeeList').addEventListener('click', e=>{
+    const editId = e.target.closest('[data-edit-employee]');
+    const delId = e.target.closest('[data-del-employee]');
+    if(editId) openEmployeeModal(editId.dataset.editEmployee);
+    if(delId){
+      if(confirm('Remove this employee? They will no longer be able to log in.')){
+        employees = employees.filter(e=>e.id!==delId.dataset.delEmployee);
+        saveEmployeesFor(currentCompany, employees);
+        renderEmployees(); populateJobEmployeeSelect();
+      }
+    }
+  });
+
+  /* =========================================================
+     COMPANY SWITCHER (sidebar menu)
+  ========================================================= */
+  document.getElementById('brandSwitcher').addEventListener('click', e=>{
+    if(e.target.closest('.company-menu')) return;
+    document.getElementById('companyMenu').classList.toggle('open');
+  });
+  document.addEventListener('click', e=>{
+    if(!e.target.closest('#brandSwitcher')) document.getElementById('companyMenu').classList.remove('open');
+  });
+  document.getElementById('cmSwitchCompany').addEventListener('click', ()=> goToAuthStep('company'));
+  document.getElementById('cmSwitchPerson').addEventListener('click', ()=> goToAuthStep('person'));
+  document.getElementById('cmLogout').addEventListener('click', ()=> goToAuthStep('site'));
+
+  /* =========================================================
+     AUTH FLOW
+  ========================================================= *
+   Front-end password gate only — good for keeping casual visitors
+   out of a link shared publicly, not a substitute for real auth.
+  */
+  function showAuthStep(id){
+    document.querySelectorAll('.auth-step').forEach(s=> s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+  function goToAuthStep(step){
+    document.getElementById('authScreen').classList.remove('hidden');
+    if(step==='site'){
+      currentCompany = null; currentEmployee = null;
+      document.getElementById('sitePassInput').value = '';
+      showAuthStep('authStepSite');
+    } else if(step==='company'){
+      renderCompanyPicker();
+      showAuthStep('authStepCompany');
+    } else if(step==='person'){
+      renderPersonPicker();
+      showAuthStep('authStepPerson');
+    }
+  }
+
+  document.getElementById('siteAuthBtn').addEventListener('click', ()=>{
+    const val = document.getElementById('sitePassInput').value;
+    if(val === SITE_PASSWORD){
+      document.getElementById('siteAuthError').classList.remove('show');
+      goToAuthStep('company');
+    } else {
+      document.getElementById('siteAuthError').classList.add('show');
+    }
+  });
+  document.getElementById('sitePassInput').addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('siteAuthBtn').click(); });
+
+  function renderCompanyPicker(){
+    const companies = loadCompanies();
+    const wrap = document.getElementById('companyList');
+    const names = Object.keys(companies);
+    wrap.innerHTML = names.map(name=> `<div class="pick-row" data-company="${escapeHtml(name)}">
+      <div><div class="pr-name">${escapeHtml(name)}</div><div class="pr-sub">Tap to enter</div></div>
+    </div>`).join('') || '<div class="empty">No companies yet — add one below.</div>';
+    wrap.querySelectorAll('[data-company]').forEach(row=>{
+      row.addEventListener('click', ()=> promptCompanyPassword(row.dataset.company));
+    });
+  }
+  document.getElementById('addCompanyBtn').addEventListener('click', ()=>{
+    const name = prompt('Name your company:');
+    if(!name || !name.trim()) return;
+    const password = prompt(`Set a password for "${name.trim()}" (you'll use this to switch into it later):`);
+    if(!password || !password.trim()){ toast('A password is required'); return; }
+    const companies = loadCompanies();
+    companies[name.trim()] = { password: password.trim() };
+    saveCompanies(companies);
+    toast('Company added');
+    promptCompanyPassword(name.trim());
+  });
+
+  let pendingCompany = null;
+  function promptCompanyPassword(name){
+    pendingCompany = name;
+    document.getElementById('companyPassTitle').textContent = `Password for ${name}`;
+    document.getElementById('companyPassInput').value = '';
+    document.getElementById('companyAuthError').classList.remove('show');
+    showAuthStep('authStepCompanyPass');
+  }
+  document.getElementById('backToCompanyBtn').addEventListener('click', ()=> goToAuthStep('company'));
+  document.getElementById('companyAuthBtn').addEventListener('click', ()=>{
+    const companies = loadCompanies();
+    const val = document.getElementById('companyPassInput').value;
+    if(pendingCompany && companies[pendingCompany] && val === companies[pendingCompany].password){
+      loadCompanyData(pendingCompany);
+      goToAuthStep('person');
+    } else {
+      document.getElementById('companyAuthError').classList.add('show');
+    }
+  });
+  document.getElementById('companyPassInput').addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('companyAuthBtn').click(); });
+
+  function renderPersonPicker(){
+    const wrap = document.getElementById('personList');
+    const empRows = employees.map(e=> `<div class="pick-row" data-person="${e.id}">
+      <div><div class="pr-name">${escapeHtml(e.name)}</div><div class="pr-sub">Employee</div></div>
+    </div>`).join('');
+    wrap.innerHTML = `<div class="pick-row" data-person="__owner__">
+      <div><div class="pr-name">Owner / Admin</div><div class="pr-sub">Full access</div></div>
+    </div>` + empRows;
+    wrap.querySelectorAll('[data-person]').forEach(row=>{
+      row.addEventListener('click', ()=>{
+        if(row.dataset.person==='__owner__'){
+          currentEmployee = null;
+          enterApp();
+        } else {
+          promptEmployeePassword(row.dataset.person);
+        }
+      });
+    });
+  }
+  document.getElementById('backToCompanyPickBtn').addEventListener('click', ()=> goToAuthStep('company'));
+
+  let pendingEmployeeId = null;
+  function promptEmployeePassword(id){
+    pendingEmployeeId = id;
+    const emp = employees.find(e=>e.id===id);
+    document.getElementById('employeePassTitle').textContent = `Password for ${emp ? emp.name : 'employee'}`;
+    document.getElementById('employeePassInput').value = '';
+    document.getElementById('employeeAuthError').classList.remove('show');
+    showAuthStep('authStepEmployeePass');
+  }
+  document.getElementById('backToPersonBtn').addEventListener('click', ()=> goToAuthStep('person'));
+  document.getElementById('employeeAuthBtn').addEventListener('click', ()=>{
+    const emp = employees.find(e=>e.id===pendingEmployeeId);
+    const val = document.getElementById('employeePassInput').value;
+    if(emp && val === emp.password){
+      currentEmployee = { id: emp.id, name: emp.name };
+      enterApp();
+    } else {
+      document.getElementById('employeeAuthError').classList.add('show');
+    }
+  });
+  document.getElementById('employeePassInput').addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('employeeAuthBtn').click(); });
+
+  function enterApp(){
+    document.getElementById('authScreen').classList.add('hidden');
+    document.getElementById('companyMenu').classList.remove('open');
+    document.getElementById('brandCompanySub').textContent = currentEmployee ? `${currentCompany} \u00b7 ${currentEmployee.name}` : currentCompany;
+    document.getElementById('cmCurrentLabel').textContent = currentCompany;
+    document.getElementById('sidebarFoot').innerHTML = `${escapeHtml(currentCompany)}${currentEmployee?' · '+escapeHtml(currentEmployee.name):''}<br>Data saved on this device`;
+    applySessionNavVisibility();
+    bootApp();
+  }
+
+  function bootApp(){
+    document.getElementById('finDate').value = todayISO();
+    populateCustomerSelects();
+    populateServiceSelect();
+    populateJobEmployeeSelect();
+    showView('dashboard');
+  }
+
+  /* kick things off at the login screen */
+  goToAuthStep('site');
+
+})();
+</script>
+</body>
+</html>
