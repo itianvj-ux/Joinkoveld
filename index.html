@@ -329,6 +329,12 @@
   .sync-status { font-size: 10px; color: #8fb8b3; margin-top: 2px; display: flex; align-items: center; gap: 4px; }
   .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: #e8b73e; display: inline-block; }
   .sync-dot.synced { background: #4c8c4a; }
+
+  /* ---------- quote calculator ---------- */
+  .qty-hint{ font-size:12px; color:var(--ink-soft); margin-top:4px; }
+  .checkbox-row{ display:flex; align-items:center; gap:8px; margin:6px 0 14px; }
+  .checkbox-row input[type=checkbox]{ width:16px; height:16px; }
+  .checkbox-row label{ margin:0; font-weight:600; color:var(--ink); font-size:13.5px; }
 </style>
 </head>
 <body>
@@ -395,7 +401,7 @@
       <div class="brand-text">
         <div class="name">Aqua</div>
         <div class="sub" id="brandCompanySub">Koveld</div>
-        <div class="sync-status" id="syncStatus"><span class="sync-dot" id="syncDot"></span><span id="syncText">Google Sheet linked</span></div>
+        <div class="sync-status" id="syncStatus"><span class="sync-dot" id="syncDot"></span><span id="syncText">Sheet connected</span></div>
       </div>
       <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="#8fb8b3" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
       <div class="company-menu" id="companyMenu">
@@ -416,7 +422,7 @@
       <button class="nav-item" data-view="finances" id="navFinances"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>Finances</button>
       <button class="nav-item" data-view="employees" id="navEmployees"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.5"/><path d="M5 21c0-4 3-6.5 7-6.5s7 2.5 7 6.5"/></svg>Employees</button>
     </nav>
-    <div class="sidebar-foot" id="sidebarFoot">Koveld Lawn Care<br>Data saved on this device</div>
+    <div class="sidebar-foot" id="sidebarFoot">Koveld Lawn Care<br>Google Sheet Sync Active</div>
   </aside>
 
   <div style="flex:1; min-width:0;">
@@ -801,45 +807,23 @@
 
   function uid(){ return Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4); }
 
-  /* ---------------- Google Sheets Integration ---------------- */
-  const DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz8dCbVWVbQ5GyJVq8msciseVWCS6Ll46b9I21m4hH0TR8u88YNdcsjyt6FTN4iVFaKdA/exec';
-
-  function updateSyncUI(status, text){
-    const dot = document.getElementById('syncDot');
-    const txt = document.getElementById('syncText');
-    if(!dot || !txt) return;
-    if(status === 'synced'){
-      dot.className = 'sync-dot synced';
-      txt.textContent = text || 'Synced to Sheet';
-    } else if(status === 'syncing'){
-      dot.className = 'sync-dot';
-      dot.style.background = '#e8b73e';
-      txt.textContent = text || 'Syncing...';
-    } else {
-      dot.className = 'sync-dot';
-      dot.style.background = '#b8503f';
-      txt.textContent = text || 'Sync error';
-    }
-  }
+  /* ---------------- Google Sheets Integration URL ---------------- */
+  const SCRIPT_URL = 'https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnQulPY94MTiaYk0aQtAcgyBA1JByIBzyxg-B4QGUStIisLeIdRp7gXDuy_bAKiOEGtefqrrEWTPAOQ393IKCpn1FOSoysolQ-0WMoq1WVGzjvoaugQMGmgrrA2udFnhdgI_FRDxkbFejcEY6MO1fnWEY4fIyHAAsudFCknVOnkM6C46weFEJDbC0WTYTfTEsEwPkwN7kgm3iS_yVaVc9B65SplgyXNHdRIytS2JIswH0EFFpoz2kBOh5letPh60xCk4sAvizOrzivqqUBrcnYApruklVQ&lib=MuWihGjcOTTz8kuDIhTdDiTE11TVkCeky';
 
   async function syncRecordToSheet(sheetName, recordData){
-    if(!DEFAULT_SCRIPT_URL) return;
-    updateSyncUI('syncing', 'Syncing to Sheet...');
+    if(!SCRIPT_URL) return;
     try {
-      await fetch(DEFAULT_SCRIPT_URL, {
+      await fetch(SCRIPT_URL, {
         method: 'POST',
         mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sheet: sheetName, action: 'add', record: recordData })
       });
-      updateSyncUI('synced', 'Synced to Google Sheet');
     } catch(err){
       console.error("Sheet sync failed:", err);
-      updateSyncUI('error', 'Sync failed');
     }
   }
 
-  /* ---------------- site / company / employee auth ---------------- */
   const SITE_PASSWORD = 'Aqua-Guard26';
   const COMPANIES_KEY = 'aqua_companies';
 
@@ -1092,7 +1076,7 @@
     syncRecordToSheet('Customers', rec);
     closeModal('modalCustomer');
     renderCustomers(); populateCustomerSelects();
-    toast('Customer saved');
+    toast('Customer saved & synced');
   });
   document.getElementById('customerTable').addEventListener('click', e=>{
     const editId = e.target.closest('[data-edit-customer]');
@@ -1339,7 +1323,6 @@
   });
   function serviceFor(model){ return services.find(s=>s.model===model); }
   function populateServiceSelect(){}
-
 
   /* =========================================================
      FINANCES
@@ -1731,7 +1714,7 @@
     document.getElementById('companyMenu').classList.remove('open');
     document.getElementById('brandCompanySub').textContent = currentEmployee ? `${currentCompany} \u00b7 ${currentEmployee.name}` : currentCompany;
     document.getElementById('cmCurrentLabel').textContent = currentCompany;
-    document.getElementById('sidebarFoot').innerHTML = `${escapeHtml(currentCompany)}${currentEmployee?' · '+escapeHtml(currentEmployee.name):''}<br>Data saved on this device`;
+    document.getElementById('sidebarFoot').innerHTML = `${escapeHtml(currentCompany)}${currentEmployee?' · '+escapeHtml(currentEmployee.name):''}<br>Google Sheet Sync Active`;
     applySessionNavVisibility();
     bootApp();
   }
@@ -1741,7 +1724,6 @@
     populateCustomerSelects();
     populateServiceSelect();
     populateJobEmployeeSelect();
-    updateSyncUI('synced', 'Google Sheet linked');
     showView('dashboard');
   }
 
