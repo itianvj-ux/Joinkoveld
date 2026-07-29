@@ -535,7 +535,7 @@
   function uid(){ return Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4); }
 
   // PASTE YOUR ACTUAL GOOGLE APPS SCRIPT WEB APP URL (ENDING IN /exec) BELOW:
-  const SCRIPT_URL = 'PASTE_YOUR_APPS_SCRIPT_EXEC_URL_HERE';
+  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxA5BEiT1LVNBqfsXq8RntzFvYI52yyXaJqoxYd9vunrA6BEv4ldHj_9iI5o7LzDlhD1A/exec';
 
   async function syncRecordToSheet(sheetName, recordData){
     if(!SCRIPT_URL || SCRIPT_URL.includes('PASTE_YOUR')) return;
