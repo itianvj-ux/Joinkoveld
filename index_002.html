@@ -395,13 +395,12 @@
       <div class="brand-text">
         <div class="name">Aqua</div>
         <div class="sub" id="brandCompanySub">Koveld</div>
-        <div class="sync-status" id="syncStatus"><span class="sync-dot" id="syncDot"></span><span id="syncText">Local storage</span></div>
+        <div class="sync-status" id="syncStatus"><span class="sync-dot" id="syncDot"></span><span id="syncText">Google Sheet linked</span></div>
       </div>
       <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="#8fb8b3" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
       <div class="company-menu" id="companyMenu">
         <button class="cm-current" id="cmCurrentLabel" disabled>Koveld</button>
         <hr>
-        <button id="cmConfigSheet">⚙️ Connect Google Sheet</button>
         <button id="cmSwitchCompany">Switch company</button>
         <button id="cmSwitchPerson">Switch person</button>
         <hr>
@@ -803,9 +802,8 @@
   function uid(){ return Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4); }
 
   /* ---------------- Google Sheets Integration ---------------- */
-  const SHEET_CONFIG_KEY = 'aqua_google_script_url';
-  function getScriptUrl(){ return localStorage.getItem(SHEET_CONFIG_KEY) || ''; }
-  
+  const DEFAULT_SCRIPT_URL = 'https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnQulPY94MTiaYk0aQtAcgyBA1JByIBzyxg-B4QGUStIisLeIdRp7gXDuy_bAKiOEGtefqrrEWTPAOQ393IKCpn1FOSoysolQ-0WMoq1WVGzjvoaugQMGmgrrA2udFnhdgI_FRDxkbFejcEY6MO1fnWEY4fIyHAAsudFCknVOnkM6C46weFEJDbC0WTYTfTEsEwPkwN7kgm3iS_yVaVc9B65SplgyXNHdRIytS2JIswH0EFFpoz2kBOh5letPh60xCk4sAvizOrzivqqUBrcnYApruklVQ&lib=MuWihGjcOTTz8kuDIhTdDiTE11TVkCeky';
+
   function updateSyncUI(status, text){
     const dot = document.getElementById('syncDot');
     const txt = document.getElementById('syncText');
@@ -820,17 +818,15 @@
     } else {
       dot.className = 'sync-dot';
       dot.style.background = '#b8503f';
-      txt.textContent = text || 'Local only';
+      txt.textContent = text || 'Sync error';
     }
   }
 
   async function syncRecordToSheet(sheetName, recordData){
-    const url = getScriptUrl();
-    if(!url) return; // Not configured
+    if(!DEFAULT_SCRIPT_URL) return;
     updateSyncUI('syncing', 'Syncing to Sheet...');
     try {
-      // Using 'no-cors' or sending via standard form wrapper fetch to Google Apps Script
-      await fetch(url, {
+      await fetch(DEFAULT_SCRIPT_URL, {
         method: 'POST',
         mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
@@ -840,24 +836,6 @@
     } catch(err){
       console.error("Sheet sync failed:", err);
       updateSyncUI('error', 'Sync failed');
-    }
-  }
-
-  document.getElementById('cmConfigSheet').addEventListener('click', ()=>{
-    const current = getScriptUrl();
-    const val = prompt("Enter your Google Apps Script Web App URL:", current);
-    if(val !== null){
-      localStorage.setItem(SHEET_CONFIG_KEY, val.trim());
-      toast(val.trim() ? "Google Sheet URL saved!" : "Google Sheet disconnected.");
-      checkSyncStatus();
-    }
-  });
-
-  function checkSyncStatus(){
-    if(getScriptUrl()){
-      updateSyncUI('synced', 'Google Sheet connected');
-    } else {
-      updateSyncUI('local', 'Local storage only');
     }
   }
 
@@ -1763,7 +1741,7 @@
     populateCustomerSelects();
     populateServiceSelect();
     populateJobEmployeeSelect();
-    checkSyncStatus();
+    updateSyncUI('synced', 'Google Sheet linked');
     showView('dashboard');
   }
 
