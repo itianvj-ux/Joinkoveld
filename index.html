@@ -242,18 +242,6 @@
   .tab{ border:none; background:none; padding:8px 16px; border-radius:8px; font-size:13.5px; font-weight:600; color:var(--ink-soft); cursor:pointer; }
   .tab.active{ background:var(--panel); color:var(--teal-deep); box-shadow:var(--shadow); }
 
-  /* measure tool */
-  .measure-wrap{ position:relative; border-radius:12px; overflow:hidden; border:1px solid var(--line); background:#0000; }
-  #measureCanvas{ width:100%; display:block; cursor:crosshair; touch-action:none; }
-  .measure-hint{ font-size:12.5px; color:var(--ink-soft); background:var(--sun-soft); border:1px solid #ecd693; border-radius:9px; padding:9px 12px; margin-bottom:12px; }
-  .measure-controls{ display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
-  .drop-zone{
-    border:2px dashed var(--line); border-radius:12px; padding:30px 14px; text-align:center; color:var(--ink-soft);
-    cursor:pointer; font-size:13.5px;
-  }
-  .drop-zone:hover{ border-color:var(--grass); background:var(--grass-soft); }
-  .drop-zone svg{ width:26px; height:26px; margin-bottom:8px; color:var(--grass); }
-
   .service-card{ display:flex; justify-content:space-between; align-items:center; padding:16px 18px; }
   .service-card + .service-card{ border-top:1px solid var(--line); }
   .service-card .sname{ font-weight:700; font-size:14.5px; }
@@ -337,16 +325,14 @@
   .emp-card .erole{ font-size:12.5px; color:var(--ink-soft); margin-top:2px; }
   .emp-card .epass{ font-family:'Space Mono'; font-size:13px; background:var(--sun-soft); color:#7a5a12; padding:3px 9px; border-radius:7px; }
 
-  /* ---------- quote calculator ---------- */
-  .qty-hint{ font-size:12px; color:var(--ink-soft); margin-top:4px; }
-  .checkbox-row{ display:flex; align-items:center; gap:8px; margin:6px 0 14px; }
-  .checkbox-row input[type=checkbox]{ width:16px; height:16px; }
-  .checkbox-row label{ margin:0; font-weight:600; color:var(--ink); font-size:13.5px; }
+  /* Sync Indicator */
+  .sync-status { font-size: 10px; color: #8fb8b3; margin-top: 2px; display: flex; align-items: center; gap: 4px; }
+  .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: #e8b73e; display: inline-block; }
+  .sync-dot.synced { background: #4c8c4a; }
 </style>
 </head>
 <body>
 
-<!-- ============ AUTH OVERLAY ============ -->
 <div id="authScreen">
   <div class="auth-card">
     <div class="auth-brand">
@@ -357,7 +343,6 @@
       <div class="name">Aqua</div>
     </div>
 
-    <!-- Step 1: site password -->
     <div class="auth-step active" id="authStepSite">
       <h2>Enter software password</h2>
       <p class="hint">This protects the whole app if it's shared publicly.</p>
@@ -366,7 +351,6 @@
       <button class="btn" style="width:100%;justify-content:center;" id="siteAuthBtn">Continue</button>
     </div>
 
-    <!-- Step 2: pick / add company -->
     <div class="auth-step" id="authStepCompany">
       <h2>Which company?</h2>
       <p class="hint">Pick your company, or add a new one.</p>
@@ -374,7 +358,6 @@
       <button class="btn secondary" style="width:100%;justify-content:center;" id="addCompanyBtn">+ Add a company</button>
     </div>
 
-    <!-- Step 2b: company password -->
     <div class="auth-step" id="authStepCompanyPass">
       <button class="auth-back" id="backToCompanyBtn">&larr; Back</button>
       <h2 id="companyPassTitle">Company password</h2>
@@ -384,7 +367,6 @@
       <button class="btn" style="width:100%;justify-content:center;" id="companyAuthBtn">Continue</button>
     </div>
 
-    <!-- Step 3: pick person -->
     <div class="auth-step" id="authStepPerson">
       <button class="auth-back" id="backToCompanyPickBtn">&larr; Switch company</button>
       <h2>Who's this?</h2>
@@ -392,7 +374,6 @@
       <div class="person-list" id="personList"></div>
     </div>
 
-    <!-- Step 3b: employee password -->
     <div class="auth-step" id="authStepEmployeePass">
       <button class="auth-back" id="backToPersonBtn">&larr; Back</button>
       <h2 id="employeePassTitle">Employee password</h2>
@@ -414,6 +395,7 @@
       <div class="brand-text">
         <div class="name">Aqua</div>
         <div class="sub" id="brandCompanySub">Koveld</div>
+        <div class="sync-status" id="syncStatus"><span class="sync-dot" id="syncDot"></span><span id="syncText">Google Sheet linked</span></div>
       </div>
       <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="#8fb8b3" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
       <div class="company-menu" id="companyMenu">
@@ -448,7 +430,6 @@
 
     <main>
 
-      <!-- DASHBOARD -->
       <section class="view" id="view-dashboard">
         <div class="view-head">
           <div>
@@ -477,7 +458,6 @@
         </div>
       </section>
 
-      <!-- CUSTOMERS -->
       <section class="view" id="view-customers">
         <div class="view-head">
           <div>
@@ -499,7 +479,6 @@
         </div>
       </section>
 
-      <!-- SCHEDULE -->
       <section class="view" id="view-schedule">
         <div class="view-head">
           <div>
@@ -519,7 +498,6 @@
         </div>
       </section>
 
-      <!-- QUOTES -->
       <section class="view" id="view-quotes">
         <div class="view-head">
           <div>
@@ -538,7 +516,6 @@
         </div>
       </section>
 
-      <!-- SERVICES -->
       <section class="view" id="view-services">
         <div class="view-head">
           <div>
@@ -550,7 +527,6 @@
         <div class="card" id="serviceList"></div>
       </section>
 
-      <!-- FINANCES -->
       <section class="view" id="view-finances">
         <div class="view-head">
           <div>
@@ -574,7 +550,6 @@
         </div>
       </section>
 
-      <!-- EMPLOYEES -->
       <section class="view" id="view-employees">
         <div class="view-head">
           <div>
@@ -590,9 +565,6 @@
   </div>
 </div>
 
-<!-- ============ MODALS ============ -->
-
-<!-- Customer modal -->
 <div class="modal-backdrop" id="modalCustomer">
   <div class="modal wide">
     <div class="modal-head"><h3 id="customerModalTitle">Add customer</h3><button class="close-x" data-close><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
@@ -639,7 +611,6 @@
   </div>
 </div>
 
-<!-- Job modal -->
 <div class="modal-backdrop" id="modalJob">
   <div class="modal">
     <div class="modal-head"><h3>Schedule a job</h3><button class="close-x" data-close><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
@@ -667,7 +638,6 @@
   </div>
 </div>
 
-<!-- Employee modal -->
 <div class="modal-backdrop" id="modalEmployee">
   <div class="modal">
     <div class="modal-head"><h3 id="employeeModalTitle">Add employee</h3><button class="close-x" data-close><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
@@ -684,7 +654,6 @@
   </div>
 </div>
 
-<!-- Job detail modal -->
 <div class="modal-backdrop" id="modalJobDetail">
   <div class="modal">
     <div class="modal-head"><h3 id="jobDetailTitle">Jobs on this day</h3><button class="close-x" data-close><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
@@ -696,7 +665,6 @@
   </div>
 </div>
 
-<!-- Service modal -->
 <div class="modal-backdrop" id="modalService">
   <div class="modal">
     <div class="modal-head"><h3 id="serviceModalTitle">Add service</h3><button class="close-x" data-close><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
@@ -727,7 +695,6 @@
   </div>
 </div>
 
-<!-- Finance modal -->
 <div class="modal-backdrop" id="modalFinance">
   <div class="modal">
     <div class="modal-head"><h3>Add finance entry</h3><button class="close-x" data-close><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
@@ -757,7 +724,6 @@
   </div>
 </div>
 
-<!-- Quote modal -->
 <div class="modal-backdrop" id="modalQuote">
   <div class="modal wide">
     <div class="modal-head"><h3>New quote</h3><button class="close-x" data-close><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
@@ -774,7 +740,6 @@
         <button class="tab" data-quote-kind="mulch">Mulch</button>
       </div>
 
-      <!-- Lawn mowing fields -->
       <div id="qFieldsLawn" class="quote-kind-fields">
         <div class="field-row">
           <div class="field"><label>Length (ft)</label><input type="number" id="qLawnLength" placeholder="60"></div>
@@ -784,19 +749,16 @@
         <div class="qty-hint">$35 minimum applies to every lawn job.</div>
       </div>
 
-      <!-- Bush clearing fields -->
       <div id="qFieldsBushClear" class="quote-kind-fields" style="display:none;">
         <div class="field"><label>Number of bushes to clear</label><input type="number" id="qBushClearQty" placeholder="4" min="0"></div>
         <div class="qty-hint" id="qBushClearRateHint"></div>
       </div>
 
-      <!-- Bush trimming fields -->
       <div id="qFieldsBushTrim" class="quote-kind-fields" style="display:none;">
         <div class="field"><label>Number of bushes to trim</label><input type="number" id="qBushTrimQty" placeholder="4" min="0"></div>
         <div class="qty-hint" id="qBushTrimRateHint"></div>
       </div>
 
-      <!-- Mulch fields -->
       <div id="qFieldsMulch" class="quote-kind-fields" style="display:none;">
         <div class="field-row">
           <div class="field"><label>Length (ft)</label><input type="number" id="qMulchLength" placeholder="4"></div>
@@ -839,10 +801,45 @@
 
   function uid(){ return Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4); }
 
-  /* ---------------- site / company / employee auth ---------------- *
-   * NOTE: this is a front-end-only password gate (no server), so treat
-   * it as a light lock to keep casual visitors out — not real security.
-   */
+  /* ---------------- Google Sheets Integration ---------------- */
+  const DEFAULT_SCRIPT_URL = 'https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnQulPY94MTiaYk0aQtAcgyBA1JByIBzyxg-B4QGUStIisLeIdRp7gXDuy_bAKiOEGtefqrrEWTPAOQ393IKCpn1FOSoysolQ-0WMoq1WVGzjvoaugQMGmgrrA2udFnhdgI_FRDxkbFejcEY6MO1fnWEY4fIyHAAsudFCknVOnkM6C46weFEJDbC0WTYTfTEsEwPkwN7kgm3iS_yVaVc9B65SplgyXNHdRIytS2JIswH0EFFpoz2kBOh5letPh60xCk4sAvizOrzivqqUBrcnYApruklVQ&lib=MuWihGjcOTTz8kuDIhTdDiTE11TVkCeky';
+
+  function updateSyncUI(status, text){
+    const dot = document.getElementById('syncDot');
+    const txt = document.getElementById('syncText');
+    if(!dot || !txt) return;
+    if(status === 'synced'){
+      dot.className = 'sync-dot synced';
+      txt.textContent = text || 'Synced to Sheet';
+    } else if(status === 'syncing'){
+      dot.className = 'sync-dot';
+      dot.style.background = '#e8b73e';
+      txt.textContent = text || 'Syncing...';
+    } else {
+      dot.className = 'sync-dot';
+      dot.style.background = '#b8503f';
+      txt.textContent = text || 'Sync error';
+    }
+  }
+
+  async function syncRecordToSheet(sheetName, recordData){
+    if(!DEFAULT_SCRIPT_URL) return;
+    updateSyncUI('syncing', 'Syncing to Sheet...');
+    try {
+      await fetch(DEFAULT_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sheet: sheetName, action: 'add', record: recordData })
+      });
+      updateSyncUI('synced', 'Synced to Google Sheet');
+    } catch(err){
+      console.error("Sheet sync failed:", err);
+      updateSyncUI('error', 'Sync failed');
+    }
+  }
+
+  /* ---------------- site / company / employee auth ---------------- */
   const SITE_PASSWORD = 'Aqua-Guard26';
   const COMPANIES_KEY = 'aqua_companies';
 
@@ -856,8 +853,8 @@
   function loadEmployees(company){ return store.get(keyFor(company,'employees'), []); }
   function saveEmployeesFor(company, list){ store.set(keyFor(company,'employees'), list); }
 
-  let currentCompany = null;   // company name (string)
-  let currentEmployee = null;  // {id,name} or null (null = owner/admin)
+  let currentCompany = null;   
+  let currentEmployee = null;  
 
   const defaultServices = [
     { id: uid(), name:'Lawn Mowing', desc:'Standard mow, edge, and blow-off', model:'lawn', rate:0.02, base:35, fee:75 },
@@ -913,7 +910,6 @@
   /* ---------------- navigation ---------------- */
   const views = ['dashboard','customers','schedule','quotes','services','finances','employees'];
   function showView(name){
-    // employees can't reach admin-only views
     if(currentEmployee && (name==='finances' || name==='services' || name==='employees')) name = 'dashboard';
     views.forEach(v=>{
       document.getElementById('view-'+v).classList.toggle('active', v===name);
@@ -1093,6 +1089,7 @@
     };
     if(existing){ Object.assign(existing, rec); } else { customers.push(rec); }
     persist();
+    syncRecordToSheet('Customers', rec);
     closeModal('modalCustomer');
     renderCustomers(); populateCustomerSelects();
     toast('Customer saved');
@@ -1239,7 +1236,9 @@
     const stepDays = { none:0, weekly:7, biweekly:14, monthly:30 }[repeat];
     for(let i=0;i<occurrences;i++){
       const d = new Date(base); d.setDate(d.getDate() + stepDays*i);
-      jobs.push({ id: uid(), customerId, date: d.toISOString().slice(0,10), notes, assignedTo, done:false });
+      const rec = { id: uid(), customerId, date: d.toISOString().slice(0,10), notes, assignedTo, done:false };
+      jobs.push(rec);
+      syncRecordToSheet('Jobs', rec);
     }
     persist();
     closeModal('modalJob');
@@ -1322,7 +1321,9 @@
       fee: parseFloat(document.getElementById('svcFee').value)||0
     };
     if(existing) Object.assign(existing, rec); else services.push(rec);
-    persist(); closeModal('modalService'); renderServices(); populateServiceSelect();
+    persist();
+    syncRecordToSheet('Services', rec);
+    closeModal('modalService'); renderServices(); populateServiceSelect();
     toast('Service saved');
   });
   document.getElementById('serviceList').addEventListener('click', e=>{
@@ -1337,7 +1338,7 @@
     }
   });
   function serviceFor(model){ return services.find(s=>s.model===model); }
-  function populateServiceSelect(){ /* kept for compatibility; quote calculator uses tabs by model instead */ }
+  function populateServiceSelect(){}
 
 
   /* =========================================================
@@ -1393,7 +1394,7 @@
     const amount = parseFloat(document.getElementById('finAmount').value);
     const date = document.getElementById('finDate').value;
     if(!amount || !date){ toast('Enter an amount and date'); return; }
-    finances.push({
+    const rec = {
       id: uid(),
       type: document.getElementById('finType').value,
       amount,
@@ -1401,13 +1402,16 @@
       category: document.getElementById('finCategory').value,
       note: document.getElementById('finNote').value.trim(),
       customerId: document.getElementById('finCustomer').value || null
-    });
-    persist(); closeModal('modalFinance'); renderFinances(); renderDashboard();
+    };
+    finances.push(rec);
+    persist();
+    syncRecordToSheet('Finances', rec);
+    closeModal('modalFinance'); renderFinances(); renderDashboard();
     toast('Entry saved');
   });
 
   /* =========================================================
-     QUOTES  +  CALCULATOR (lawn / bush clearing / bush trimming / mulch)
+     QUOTES
   ========================================================= */
   function renderQuotes(){
     const tbody = document.getElementById('quoteTable');
@@ -1522,7 +1526,7 @@
 
   document.getElementById('saveQuoteBtn').addEventListener('click', ()=>{
     const { price, details } = computeQuote();
-    quotes.push({
+    const rec = {
       id: uid(),
       name: document.getElementById('qName').value.trim(),
       address: document.getElementById('qAddress').value.trim(),
@@ -1531,8 +1535,11 @@
       price: price || 0,
       notes: document.getElementById('qNotes').value.trim(),
       date: todayISO()
-    });
-    persist(); closeModal('modalQuote'); renderQuotes();
+    };
+    quotes.push(rec);
+    persist();
+    syncRecordToSheet('Quotes', rec);
+    closeModal('modalQuote'); renderQuotes();
     toast('Quote saved');
   });
 
@@ -1568,6 +1575,7 @@
     const rec = { id, name, password };
     if(existing) Object.assign(existing, rec); else employees.push(rec);
     saveEmployeesFor(currentCompany, employees);
+    syncRecordToSheet('Employees', rec);
     closeModal('modalEmployee'); renderEmployees(); populateJobEmployeeSelect();
     toast('Employee saved');
   });
@@ -1585,7 +1593,7 @@
   });
 
   /* =========================================================
-     COMPANY SWITCHER (sidebar menu)
+     COMPANY SWITCHER
   ========================================================= */
   document.getElementById('brandSwitcher').addEventListener('click', e=>{
     if(e.target.closest('.company-menu')) return;
@@ -1600,10 +1608,7 @@
 
   /* =========================================================
      AUTH FLOW
-  ========================================================= *
-   Front-end password gate only — good for keeping casual visitors
-   out of a link shared publicly, not a substitute for real auth.
-  */
+  ========================================================= */
   function showAuthStep(id){
     document.querySelectorAll('.auth-step').forEach(s=> s.classList.remove('active'));
     document.getElementById(id).classList.add('active');
@@ -1736,10 +1741,10 @@
     populateCustomerSelects();
     populateServiceSelect();
     populateJobEmployeeSelect();
+    updateSyncUI('synced', 'Google Sheet linked');
     showView('dashboard');
   }
 
-  /* kick things off at the login screen */
   goToAuthStep('site');
 
 })();
