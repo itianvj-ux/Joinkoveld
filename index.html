@@ -802,8 +802,7 @@
   function uid(){ return Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4); }
 
   /* ---------------- Google Sheets Integration ---------------- */
-  const DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz8dCbVWVbQ5GyJVq8msciseVWCS6Ll46b9I21m4hH0TR8u88YNdcsjyt6FTN4iVFaKdA/exec';
-
+  const DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyzqyYdhqU9lnL22yXJYw0ISUz6uIWl7DqRPc2MqJZazpLj8mocCfzWCO3dXFPTwgIlLQ/exec',
   function updateSyncUI(status, text){
     const dot = document.getElementById('syncDot');
     const txt = document.getElementById('syncText');
